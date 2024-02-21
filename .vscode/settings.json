@@ -1,0 +1,8 @@
+{
+    "files.exclude": {
+        "gimi-ini_extension/out": false
+    },
+    "search.exclude": {
+        "gimi-ini_extension/out": true
+    }
+}

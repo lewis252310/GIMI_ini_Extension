@@ -1,0 +1,85 @@
+{
+  "name": "gimi-ini",
+  "displayName": "GIMI ini",
+  "description": "GIMI ini Extension",
+  "author": {
+    "name": "AGMG"
+  },
+  "version": "0.1.1",
+  "engines": {
+    "vscode": "^1.72.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Snippets",
+    "Themes",
+    "Other"
+  ],
+  "activationEvents": [
+    "onLanguage:gimi-ini"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "languages": [{
+      "id": "gimi-ini",
+      "aliases": ["GIMI ini", "GIMI"],
+      "extensions": [".ini", ".gimini"],
+      "configuration": "./language-configuration.json"
+    }],
+    "commands": [
+      {
+        "command": "gimi-ini-ts.helloWorld",
+        "title": "Hello World"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "gimi-ini",
+        "scopeName": "source.gimi-ini",
+        "path": "./syntaxes/gimi_ini.tmLanguage.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "gimi-ini",
+        "path": "./snippets/gimi-ini.json"
+      }
+    ],
+    "themes": [
+      {
+        "label": "GIMI-ini",
+        "uiTheme": "vs-dark",
+        "path": "./themes/GIMI ini dark-color-theme_building.json"
+      }
+    ],
+    "colors": [
+      {
+        "id": "gimi.pyro",
+        "description": "Pyro from the seven elements.",
+        "defaults": {
+          "dark": "#F07830",
+          "light": "#F07830"
+        }
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.86.0",
+    "@types/mocha": "^10.0.6",
+    "@types/node": "18.x",
+    "@typescript-eslint/eslint-plugin": "^6.15.0",
+    "@typescript-eslint/parser": "^6.15.0",
+    "eslint": "^8.56.0",
+    "typescript": "^5.3.3",
+    "@vscode/test-cli": "^0.0.4",
+    "@vscode/test-electron": "^2.3.8"
+  }
+}

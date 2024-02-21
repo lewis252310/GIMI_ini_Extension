@@ -1,0 +1,167 @@
+{
+	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+	"version": "0.0.1",
+	"scopeName": "source.gimi-ini",
+	"name": "gimi-ini",
+	"patterns": [
+		{
+			"include": "#keywords"
+		},
+		{
+			"include": "#sections"
+		},
+		{
+			"include": "#variable"
+		},
+		{
+			"include": "#path"
+		},
+		{
+			"include": "#strings"
+		},
+		{
+			"include": "#comment"
+		},
+		{
+			"include": "#invalid"
+		}
+	],
+	"repository": {
+		"expression": {
+			"patterns": [
+				{ "include": "#keywords" },
+				{ "include": "#variable" },
+				{ "include": "#strings" },
+				{ "include": "#line" }
+			]
+		},
+		"line": {
+			"name": "meta.everyline.gimi-ini",
+			"begin": "",
+			"end": "$",
+			"patterns": [
+				{ "include": "#expression" }
+			],
+			"_comment": "What is this?"
+		},
+		"control_block": {
+			"name": "keyword.control.block.gimi-ini",
+			"begin": "^([. \\t]*)(if[\\S\\s]*?^(\\g1)endif)",
+			"beginCaptures": {
+				"1": { "name": "keyword.control.block.start"},
+				"2": { 
+					"name": "keyword.control.block.content",
+					"patterns": [
+						{
+							"include": "#variable"
+						}
+					]
+				}
+			},
+			"end": ""	
+		},
+		"keywords": {
+			"patterns": [
+				{
+					"include": "#control_block"
+				},
+				{
+					"name": "keyword.scope.variable.gimi-ini",
+					"match": "\\b(global|local|persist)\\b"
+				},
+				{
+					"name": "keyword.namespace.gimi-ini",
+					"match": "^\\bnamespace\\b"
+				},
+				{
+					"name": "keyword.flow.execution.gimi-ini",
+					"match": "^\\s*(post|pre)\\b"
+				},
+				{
+					"name": "keyword.operate.variable.gimi-ini",
+					"match": "\\b(ref(erence|)|copy|run|store)\\b"
+				},
+				{
+					"name": "keyword.member.override.gimi-ini",
+					"match": "\\b(hash|handling|drawindexed|filter_index|allow_duplicate_hash|match_first_index|match_\\w*)\\b"
+				},
+				{
+					"name": "keyword.member.resource.gimi-ini",
+					"match": "\\b(type|filename|format|stride|data)\\b"
+				},
+				{
+					"name": "keyword.member.key.gimi-ini",
+					"match": "\\b(condition|key|type|warp|delay|release_(delay|transition(_type|))|transition(_type|)|convergence|separation)\\b"
+				},
+				{
+					"name": "keyword.member.customshader.gimi-ini",
+					"match": "\\b(topology|cull|fill|blend|alpha|max_executions_per_frame|alpha_to_coverage)\\b"
+				},
+				{
+					"name": "keyword.operator.gimi-ini",
+					"match": "(\\+|-|\\*|\\/|\\/\\/|\\%|=|==|!=|!==|&&|\\|\\|)"
+				}
+			]
+		},
+		"sections": {
+			"patterns": [
+				{
+					"name": "entity.section.header.gimi-ini",
+					"match": "\\[((Key|(Texture|Shader)Override|CommandList|Resource|CustomShader).+|Constants|Present)\\]"
+				}
+			]
+		},
+		"variable" :{
+			"patterns": [
+				{
+					"name":"variable.parameter.gimi-ini",
+					"match": "\\$.+?\\b"
+				},
+				{
+					"name": "variable.language.gimi-ini",
+					"match": "\\b(time|(ps-t|cb|vb)\\d{1,2}|[xyzw]\\d{0,3})\\b"
+				}
+			]
+		},
+		"path": {
+			"patterns": [
+				{
+					"name": "constant.namespace.path.gimi-ini",
+					"match": "\\w+(?:\\\\\\w+)+"
+				}
+			]
+		},
+		"strings": {
+			"name": "string.quoted.double.gimi-ini",
+			"begin": "\"",
+			"end": "\"",
+			"patterns": [
+				{
+					"name": "constant.character.escape.gimi-ini",
+					"match": "\\\\."
+				},
+				{
+					"name": "string.easter-eggs.gimi-ini",
+					"match": "Seriously\\? Why you have typing the full \\.ini by hand\\?"
+				}
+			]
+		},
+		"comment": {
+			"name": "comment.line.gimi-ini",
+			"begin": "^(\\s*);",
+			"end": "$",
+			"patterns": [
+				{
+					"name": "comment.easter-eggs.gimi-ini",
+					"match": "\\b(bug(s)?|issue(s)?|good luck)\\b"
+				}
+			]
+		},
+		"invalid": {
+			"patterns": [{
+				"name": "invalid.illegal.gimi-ini",
+				"match": "(?<=\\S)\\s*;.*"
+			}]
+		}
+	}
+}

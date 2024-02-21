@@ -1,0 +1,154 @@
+{
+	"name": "GIMI ini dark",
+	"tokenColors": [
+		{
+			"name": "Comment",
+			"scope": [
+				"comment.line.gimi-ini"
+			],
+			"settings": {
+				"foreground": "#90C030"
+			}
+		},
+		{
+			"name": "Variables scope, namespace",
+			"scope": [
+				"keyword.scope.variable.gimi-ini",
+				"keyword.namespace.gimi-ini"
+			],
+			"settings": {
+				"foreground": "#60C0F0"
+			}
+		},
+		{
+			"name": "User variables",
+			"scope": [
+				"variable.parameter.gimi-ini"
+			],
+			"settings": {
+				"foreground": "#F07830"
+			}
+		},
+		{
+			"name": "GIMI variables",
+			"scope": [
+				"variable.language.gimi-ini"
+			],
+			"settings": {
+				"foreground": "#f0a330"
+			}
+		},
+		{
+			"name": "Section header",
+			"scope": [
+				"entity.section.header.gimi-ini"
+			],
+			"settings": {
+				"foreground": "#3461dd"
+			}
+		},
+		{
+			"name": "Section member",
+			"scope": [
+				"keyword.member"
+			],
+			"settings": {
+				"foreground": "#A890C0"
+			}
+		},
+		{
+			"name": "Path",
+			"scope": [
+				"constant.namespace.path.gimi-ini"
+			],
+			"settings": {
+				"foreground": "#1890C0"
+			}
+		},
+		{
+			"name": "GIMI operate. ref copy post pre...",
+			"scope": [
+				"keyword.operate.variable.gimi-ini",
+				"keyword.flow.execution.gimi-ini"
+			],
+			"settings": {
+				"foreground": "#78C0A8"
+			}
+		},
+		{
+			"name": "GIMI ini control",
+			"scope": [
+				"keyword.control.gimi-ini"
+			],
+			"settings": {
+				"foreground": "#ffd84a"
+			}
+		},
+		{
+			"name": "String",
+			"scope": [
+				"string.quoted.double"
+			],
+			"settings": {
+				"foreground": "#A8D8D8"
+			}
+		},
+		{
+			"name": "Operator",
+			"scope": [
+				"keyword.operator.gimi-ini"
+			],
+			"settings": {
+				"foreground": "#D8D8F0"
+			}
+		},
+		{
+			"name": "Control block level 1",
+			"scope": [
+				"keyword.control.block.gimi-ini"
+			],
+			"settings": {
+				"foreground": "#4a4af5"
+			}
+		},
+		{
+			"name": "Control block level 2",
+			"scope": [
+				"keyword.control.block.gimi-ini keyword.control.block.gimi-ini"
+			],
+			"settings": {
+				"foreground": "#784af5"
+			}
+		},
+		{
+			"name": "Control block level 3",
+			"scope": [
+				"keyword.control.block.gimi-ini keyword.control.block.gimi-ini keyword.control.block.gimi-ini"
+			],
+			"settings": {
+				"foreground": "#a84af5"
+			}
+		},
+		{
+			"name": "Control block level 4",
+			"scope": [
+				"keyword.control.block.gimi-ini keyword.control.block.gimi-ini keyword.control.block.gimi-ini keyword.control.block.gimi-ini"
+			],
+			"settings": {
+				"foreground": "#d34af5"
+			}
+		},
+		{
+			"name": "Invalid",
+			"scope": [
+				"invalid.illegal.gimi-ini",
+				"comment.easter-eggs.gimi-ini",
+				"string.easter-eggs.gimi-ini"
+			],
+			"settings": {
+				"foreground": "#fc032d",
+				"fontStyle": "bold"
+			}
+		}
+	]
+}

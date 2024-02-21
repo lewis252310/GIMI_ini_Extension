@@ -1,0 +1,430 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "version": "0.1.4",
+  "scopeName": "source.gimi-ini",
+  "name": "gimi-ini",
+  "patterns": [
+    {
+      "include": "#sections"
+    },
+    {
+      "include": "#namespace"
+    },
+    {
+      "include": "#comment"
+    }
+  ],
+  "repository": {
+    "sections": {
+      "name": "entity.section.gimi-ini",
+      "begin": "^(?=\\[.*\\])",
+      "end": "(?!\\G)(?=\\[.*\\])",
+      "patterns": [
+        {
+          "include": "#comment"
+        },
+        {
+          "include": "#section_Constants"
+        },
+        {
+          "include": "#section_Present"
+        },
+        {
+          "include": "#section_Key"
+        },
+        {
+          "include": "#section_TextureOverride"
+        },
+        {
+          "include": "#section_ShaderOverride"
+        },
+        {
+          "include": "#section_CustomShader"
+        },
+        {
+          "include": "#section_CommandList"
+        },
+        {
+          "include": "#section_Resource"
+        }
+      ]
+    },
+    "section_Constants": {
+      "name": "entity.section.Constants.gimi-ini",
+      "begin": "^\\[(Constants)\\]",
+      "beginCaptures": {
+        "1": {
+          "name": "entity.section.name.gimi-ini"
+        }
+      },
+      "end": "(?=\\[)",
+      "patterns": [
+        {
+          "include": "#General"
+        },
+        {
+          "name": "keyword.Constants-section.gimi-ini",
+          "match": "\\b(global|persist)(?= )\\b"
+        }
+      ]
+    },
+    "section_Present": {
+      "name": "entity.section.Present.gimi-ini",
+      "begin": "^\\[(Present)\\]",
+      "beginCaptures": {
+        "1": {
+          "name": "entity.section.name.gimi-ini"
+        }
+      },
+      "end": "(?=\\[)",
+      "patterns": [
+        {
+          "include": "#General"
+        }
+      ]
+    },
+    "section_Key": {
+      "name": "entity.section.Key.gimi-ini",
+      "begin": "^\\[(Key.+)\\]",
+      "beginCaptures": {
+        "1": {
+          "name": "entity.section.name.gimi-ini"
+        }
+      },
+      "end": "(?=\\[)",
+      "patterns": [
+        {
+          "include": "#General"
+        },
+        {
+          "name": "keyword.Key-section.gimi-ini",
+          "match": "\\b(?i)( condition|key|back|type|warp|delay|release_(delay|transition(_type|))|transition(_type|)|convergence|separation )(?= )\\b"
+        }
+      ]
+    },
+    "section_TextureOverride": {
+      "name": "entity.section.TextureOverride.gimi-ini",
+      "begin": "^\\[(TextureOverride.+)\\]",
+      "beginCaptures": {
+        "1": {
+          "name": "entity.section.name.gimi-ini"
+        }
+      },
+      "end": "(?=\\[)",
+      "patterns": [
+        {
+          "include": "#General"
+        },
+        {
+          "name": "keyword.TextureOverride-section.gimi-ini",
+          "match": "\\b(?i)(hash|handling|stereomode|format|width|height|width_multiply|height_multiply|iteration|filter_index|expand_region_copy|deny_cpu_read)(?= )\\b"
+        },
+        {
+          "name": "keyword.TextureOverride-section.gimi-ini",
+          "match": "\\b(?i)(match_(type|usage|bind_flags|cpu_access_flags|misc_flags|byte_width|stride|mips|format|width|height|depth|array|msaa|msaa_quality|first_vertex|first_index|first_instance|vertex_count|index_count|instance_count|priority))(?= )\\b"
+        }
+      ]
+    },
+    "section_ShaderOverride": {
+      "name": "entity.section.ShaderOverride.gimi-ini",
+      "begin": "^\\[(ShaderOverride.+)\\]",
+      "beginCaptures": {
+        "1": {
+          "name": "entity.section.name.gimi-ini"
+        }
+      },
+      "end": "(?=\\[)",
+      "patterns": [
+        {
+          "include": "#General"
+        },
+        {
+          "name": "keyword.ShaderOverride-section.gimi-ini",
+          "match": "\\b(?i)(hash|handling|allow_duplicate_hash|depth_filter|partner|model|disable_scissor|filter_index)(?= )\\b"
+        }
+      ]
+    },
+    "section_CustomShader": {
+      "name": "entity.section.CustomShader.gimi-ini",
+      "begin": "^\\[(CustomShader.+)\\]",
+      "beginCaptures": {
+        "1": {
+          "name": "entity.section.name.gimi-ini"
+        }
+      },
+      "end": "(?=\\[)",
+      "patterns": [
+        {
+          "include": "#General"
+        },
+        {
+          "name": "keyword.CustomShader-section.gimi-ini",
+          "match": "(?i)max_executions_per_frame|flags"
+        },
+        {
+          "name": "keyword.CustomShader-section.gimi-ini",
+          "match": "(?i)blend(_factor|_state_merge|)|alpha(_to_coverage|)|mask"
+        },
+        {
+          "name": "keyword.CustomShader-section.gimi-ini",
+          "match": "(?i)sample_mask"
+        },
+        {
+          "name": "keyword.CustomShader-section.gimi-ini",
+          "match": "(?i)depth(_enable|_write_mask|_func|_stencil_state_merge|_clip_enable|_bias|_bias_clamp)"
+        },
+        {
+          "name": "keyword.CustomShader-section.gimi-ini",
+          "match": "(?i)stencil(_enable|_read_mask|_write_mask|_front|stencil_back|stencil_ref)"
+        },
+        {
+          "name": "keyword.CustomShader-section.gimi-ini",
+          "match": "(?i)fill|cull|front"
+        },
+        {
+          "name": "keyword.CustomShader-section.gimi-ini",
+          "match": "(?i)slope_scaled_depth_bias|depth|scissor_enable"
+        },
+        {
+          "name": "keyword.CustomShader-section.gimi-ini",
+          "match": "(?i)multisample_enable|antialiased_line_enable"
+        },
+        {
+          "name": "keyword.CustomShader-section.gimi-ini",
+          "match": "(?i)rasterizer_state_merge"
+        },
+        {
+          "name": "keyword.CustomShader-section.gimi-ini",
+          "match": "(?i)topology"
+        },
+        {
+          "name": "keyword.CustomShader-section.gimi-ini",
+          "match": "(?i)sampler"
+        },
+        {
+          "name": "keyword.CustomShader-section.blendfactor.gimi-ini",
+          "match": "(?i)src_alpha_sat|zero|one|(inv_|)(src(1?)|dest)(_color|_alpha)"
+        }
+      ]
+    },
+    "section_CommandList": {
+      "name": "entity.section.CommandList.gimi-ini",
+      "begin": "^\\[(CommandList.+)\\]",
+      "beginCaptures": {
+        "1": {
+          "name": "entity.section.name.gimi-ini"
+        }
+      },
+      "end": "(?=\\[)",
+      "patterns": [
+        {
+          "include": "#General"
+        },
+        {
+          "name": "keyword.CommandList-section.gimi-ini",
+          "match": "\\b(?i)(hash|handling|allow_duplicate_hash|depth_filter|partner|model|disable_scissor|filter_index)(?= )\\b"
+        }
+      ]
+    },
+    "section_Resource": {
+      "name": "entity.section.Resource.gimi-ini",
+      "begin": "^\\[(Resource.+)\\]",
+      "beginCaptures": {
+        "1": {
+          "name": "entity.section.name.gimi-ini"
+        }
+      },
+      "end": "(?=\\[)",
+      "patterns": [
+        {
+          "include": "#General"
+        },
+        {
+          "name": "keyword.Resource-section.gimi-ini",
+          "match": "\\b(?i)(type|filename|format|stride|data|array)(?= )\\b"
+        }
+      ]
+    },
+    "namespace": {
+      "name": "entity.namespace.gimi-ini",
+      "begin": "^(?=namespace)",
+      "end": "$|\\n",
+      "patterns": [
+        {
+          "name": "keyword.namespace.gimi-ini",
+          "match": "namespace"
+        },
+        {
+          "name": "constant.namespace.path.gimi-ini",
+          "match": "\\w+(?:\\\\\\w+)+"
+        }
+      ]
+    },
+    "General": {
+      "patterns": [
+        {
+          "include": "#comment"
+        },
+        {
+          "include": "#keywords"
+        },
+        {
+          "include": "#variable"
+        }
+      ]
+    },
+    "keywords": {
+      "patterns": [
+        {
+          "name": "keyword.control.gimi-ini",
+          "match": "\\b(?i)if|else( if|)|endif\\b"
+        },
+        {
+          "name": "keyword.other.variable.type.gimi-ini",
+          "match": "\\b(?i)local\\b"
+        },
+        {
+          "name": "keyword.analyse-options.gimi-ini",
+          "match": "(?i)(analyse_options)(?= )"
+        },
+        {
+          "name": "keyword.operator.execution.flow.gimi-ini",
+          "match": "(?i)(post|pre)(?= )"
+        },
+        {
+          "name": "keyword.operator.variable.flow.gimi-ini",
+          "match": "\\b(?i)(ref(erence|)|copy|run|store)(?= )\\b"
+        },
+        {
+          "name": "keyword.operator.gimi-ini",
+          "match": "(<|>|<=|>=|==|===|!=|!==|&&|\\|\\|)"
+        },
+        {
+          "name": "keyword.operator.gimi-ini",
+          "match": "(\\+{1}|-{1}|\\*{1,2}|\\/{1,2}|\\%{1}|!{1})"
+        },
+        {
+          "name": "keyword.operator.gimi-ini",
+          "match": "(=)"
+        }
+      ]
+    },
+    "variable": {
+      "patterns": [
+        {
+          "name": "variable.name.gimi-ini",
+          "match": "(?i)\\$[a-z_\\\\][\\w\\\\]*\\b"
+        },
+        {
+          "name": "variable.other.gimi-ini",
+          "match": "\\b(?i)[vhdgpc]s{0}\\b"
+        },
+        {
+          "name": "variable.language.gimi-ini",
+          "match": "\\b((?i)([vhdgpc]s-t|[pc]-u|([vhdgpc]-)cb|vb)\\d{1,3}|ib)\\b"
+        },
+        {
+          "name": "variable.parameter.gimi-ini",
+          "match": "\\b((?i)[xyzw]\\d{0,3})\\b"
+        },
+        {
+          "name": "variable.dump.type.gimi-ini",
+          "match": "\\bdump_rt|dump_tex|dump_cb|dump_vb|dump_ib|buf|txt\\b"
+        },
+        {
+          "name": "constant.numeric.gimi-ini",
+          "match": "(?i)rt_width|rt_height|res_width|res_height|window_width|window_height|cursor_screen_x|cursor_screen_y|cursor_window_x|cursor_window_y|cursor_x|cursor_y"
+        },
+        {
+          "name": "constant.numeric.gimi-ini",
+          "match": "(?i)vertex_count|index_count|instance_count|first_vertex|first_index|first_instance|thread_group_count_x|thread_group_count_y|thread_group_count_z|indirect_offset|draw_type"
+        },
+        {
+          "name": "constant.numeric.gimi-ini",
+          "match": "(?i)time|hunting"
+        },
+        {
+          "name": "constant.numeric.gimi-ini",
+          "match": "(?i)null|inf|NaN"
+        }
+      ]
+    },
+    "strings": {
+      "name": "string.quoted.double.gimi-ini",
+      "begin": "\"",
+      "end": "\"",
+      "patterns": [
+        {
+          "name": "constant.character.escape.gimi-ini",
+          "match": "\\\\."
+        },
+        {
+          "name": "string.easter-eggs.gimi-ini",
+          "match": "Seriously\\? Why you have typing the full \\.ini by hand\\?"
+        }
+      ]
+    },
+    "comment": {
+      "begin": "(?=^.*?;)",
+      "end": "$|\\n",
+      "patterns": [
+        {
+          "name": "comment.line.semicolon.gimi-ini",
+          "match": "^([ \\t]+)?(;)(.*)$",
+          "captures": {
+            "1": {
+              "name": "punctuation.whitespace.comment.leading.gimi-ini"
+            },
+            "2": {
+              "name": "punctuation.definition.comment.gimi-ini"
+            },
+            "3": {
+              "name": "comment.line.semicolon.content.gimi-ini",
+              "patterns": [
+                {
+                  "name": "comment.easter-eggs.gimi-ini",
+                  "match": "\\bbug(s)?|issue(s)?|good luck\\b"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "invalid.illegal.comment.gimi-ini",
+          "match": "^.+;.*$"
+        }
+      ]
+    },
+    "comment2": {
+      "begin": "^([ \\t]+)?(?=;)",
+      "beginCaptures": {
+        "1": {
+          "name": "punctuation.whitespace.comment.leading"
+        }
+      },
+      "end": "$|\\n",
+      "patterns": [
+        {
+          "name": "comment.line.semicolon.gimi-ini",
+          "match": "(;)(.+)?",
+          "captures": {
+            "1": {
+              "name": "punctuation.definition.comment.ini"
+            },
+            "2": {
+              "name": "comment.line.semicolon.content.gimi-ini"
+            }
+          }
+        }
+      ]
+    },
+    "invalid": {
+      "patterns": [
+        {
+          "name": "invalid.illegal.comment.gimi-ini",
+          "match": "^(?:[^\\s].+)(?=;).*$"
+        }
+      ]
+    }
+  }
+}
