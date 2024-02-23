@@ -1,11 +1,11 @@
 
 // Maybe need change import from '*' to 'what need', not very like a lot 'vscode.' prefix
-import { ExtensionContext, window, commands, languages, Hover, workspace } from 'vscode';
+import { ExtensionContext, window, commands, languages, workspace } from 'vscode';
 
-import { getHoverMessage } from './hoverMessage';
+import { GIMIHoverProvider } from './hoverMessage';
 import { GIMIFoldingRangeProvider } from './foldingRange';
 import { GIMICompletionItemProvider } from './autoCompletion';
-import { GIMIDefinitionProvider } from './definitionJump'
+import { GIMIDefinitionProvider } from './definitionJump';
 import { updateDiagonstics } from './diagnostics';
 import { parseDocumentVariables } from './util';
 
@@ -36,7 +36,11 @@ export function activate(context: ExtensionContext) {
 
 	context.subscriptions.push(languages.registerDefinitionProvider('gimi-ini',
 		new GIMIDefinitionProvider
-	))
+	));
+
+	context.subscriptions.push(languages.registerHoverProvider('gimi-ini',
+		new GIMIHoverProvider
+	));
 
 
 	const diagnosticCollection = languages.createDiagnosticCollection('gimi-ini');
@@ -64,24 +68,6 @@ export function activate(context: ExtensionContext) {
 		updateDiagonstics(document, diagnosticCollection);
 		activeDocumentVariables = parseDocumentVariables(document);
 	}
-
-	/**
-	 * For now, we're not going to go any deeper into using code to build the check,
-	 * so this is just a preliminary entry point.
-	 */
-	// let provider = languages.registerHoverProvider('gimi-ini', {
-    //     provideHover(document, position, token) {
-	// 		if (token.isCancellationRequested) {
-    //             return;
-    //         }
-	// 		const message = getHoverMessage(document, position);
-	// 		if (message !== undefined) {
-	// 			return new Hover(message);
-	// 		}
-	// 		return;
-    //     }
-    // });
-	// context.subscriptions.push(provider);
 }
 
 export function deactivate() {}

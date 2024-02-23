@@ -68,7 +68,7 @@ export class GIMIFoldingRangeProvider implements FoldingRangeProvider {
             // `if else` block folding range logic
             if (/^([ \t]*)?if/i.test(line)) {
                 ifBlockStarts.push(i);
-            } else if (/^([ \t]*)?else( if)?/i.test(line)) {
+            } else if (/^([ \t]*)?(else( if)?|elif)/i.test(line)) {
                 let start = ifBlockStarts.pop();
                 if (start !== undefined) {
                     ranges.push(new FoldingRange(start, (i - 1), FoldingRangeKind.Region))

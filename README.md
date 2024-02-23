@@ -29,16 +29,41 @@ This is a simple extension so not have more features
  - [x] Highlighting
  - [x] Keyword range check
  - [ ] Simple keyword explanation
- - [ ] Error checking
+ - [x] Error checking
+ - [x] Code block floding
 
-Keyword explanation preview, Default disabled
+
+Static highlight preview.
+
+![static_highlight](images/static_highlight_v1.png)
+
+
+Comment position check.
+
+![comment_diagnostic](images/comment_diagnostic.jpg)
+
+
+Keyword explanation preview, Default disabled.
 
 ![keyword explanation](images/hover_msg_v1.gif)
 
 
-Static highlight preview, Default enabled
+Auto completion for variable.
 
-![static highlight](images/static_highlight_v1.png)
+![auto_completion_variable](images/auto_completion_variable.gif)
+
+
+Definition jump for variables and sections.
+
+![definition_jump_variable](images/definition_jump_variable.gif)
+
+![definition_jump_variable](images/definition_jump_section.gif)
+
+
+Code folding for section and `if else` block.
+
+![code_folding](images/code_folding.gif)
+
 
 > Tip: No more image or animations from now.
 

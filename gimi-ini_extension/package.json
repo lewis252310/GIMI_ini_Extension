@@ -5,9 +5,24 @@
   "author": {
     "name": "AGMG"
   },
-  "version": "0.2.1",
+  "contributors": [
+    {
+      "name": "SinsOfSeven@sinsofseven",
+      "url": "https://github.com/SinsOfSeven"
+    },
+    {
+      "name": "!someone name has 63B long?",
+      "url": "https://github.com/lewis252310"
+    }
+  ],
+  "homepage": "https://github.com/lewis252310/GIMI_ini_Extension",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lewis252310/GIMI_ini_Extension.git"
+  },
+  "version": "0.2.2",
   "engines": {
-    "vscode": "^1.72.0"
+    "vscode": "^1.81.0"
   },
   "categories": [
     "Programming Languages",
@@ -20,12 +35,20 @@
   ],
   "main": "./out/extension.js",
   "contributes": {
-    "languages": [{
-      "id": "gimi-ini",
-      "aliases": ["GIMI ini", "GIMI"],
-      "extensions": [".ini", ".gimini"],
-      "configuration": "./language-configuration.json"
-    }],
+    "languages": [
+      {
+        "id": "gimi-ini",
+        "aliases": [
+          "GIMI ini",
+          "GIMI"
+        ],
+        "extensions": [
+          ".ini",
+          ".gimini"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
     "commands": [
       {
         "command": "gimi-ini-ts.helloWorld",
@@ -65,14 +88,14 @@
     "test": "vscode-test"
   },
   "devDependencies": {
-    "@types/vscode": "^1.86.0",
     "@types/mocha": "^10.0.6",
     "@types/node": "18.x",
+    "@types/vscode": "^1.81.0",
     "@typescript-eslint/eslint-plugin": "^6.15.0",
     "@typescript-eslint/parser": "^6.15.0",
-    "eslint": "^8.56.0",
-    "typescript": "^5.3.3",
     "@vscode/test-cli": "^0.0.4",
-    "@vscode/test-electron": "^2.3.8"
+    "@vscode/test-electron": "^2.3.8",
+    "eslint": "^8.56.0",
+    "typescript": "^5.3.3"
   }
 }

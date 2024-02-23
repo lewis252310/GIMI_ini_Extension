@@ -1,5 +1,37 @@
 
-import { TextDocument, Position } from 'vscode'
+import { TextDocument, Position, HoverProvider, CancellationToken, Hover, ProviderResult } from 'vscode'
+
+
+/**
+ * For now, we're not going to go any deeper into using code to build the check,
+ * so this is just a preliminary entry point.
+ */
+export class GIMIHoverProvider implements HoverProvider{
+	provideHover(document: TextDocument, position: Position, token: CancellationToken): ProviderResult<Hover> {
+		if (token.isCancellationRequested) {
+			return;
+		}
+		const range = document.getWordRangeAtPosition(position);
+		const word = document.getText(range);
+		let message = undefined;
+		if (word === 'hash') {
+			// if (isInTextureOverrideSection(document, position)) {
+			// 	message = `The value of the 'hash' should be a hash value.\nYou can find the hash value from the hunting mode.`;
+			// } else {
+			// 	message = `⚠️The 'hash' keyword should only appear in 'Override' section and will only work in 'Override' section.`;
+			// }
+			return new Hover('Hehehehe...');
+		} else if (word === 'store') {
+			return new Hover(`You should not use this, unless you know what are you doing for`);
+		}
+		
+		if (message !== undefined) {
+			return new Hover(message);
+		}
+		// throw new Error('Method not implemented.');
+		return;
+	}
+}
 
 
 /**

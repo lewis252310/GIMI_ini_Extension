@@ -1,4 +1,4 @@
-import { languages, DiagnosticCollection, TextDocument, TextDocumentChangeEvent, Diagnostic, Range } from 'vscode'
+import { languages, DiagnosticCollection, TextDocument, TextDocumentChangeEvent, Diagnostic, Range, Position } from 'vscode'
 
 
 // Not use now
@@ -18,7 +18,7 @@ function diagonsticLineText(text: string): Range {
 
 export function updateDiagonstics(event: TextDocumentChangeEvent | TextDocument, diagnosticCollection: DiagnosticCollection) {
     const diagnostics: Diagnostic[] = [];
-    const commentLineRegex = new RegExp(`^(.*);(.*)$`, 'i');
+    const commentLineRegex = new RegExp(`^(.*?);(.*)$`, 'i');
     const sectionTitleRegex = new RegExp(`(.+)?\\[.*\\](.+)?`, 'i');
     let document: TextDocument;
 
@@ -35,11 +35,23 @@ export function updateDiagonstics(event: TextDocumentChangeEvent | TextDocument,
             let endPosition = change.rangeOffset + change.text.length;
             let e = document.positionAt(endPosition).line;
             ranges.push({startLine: s, endLine: e});
+            const lineDiff = e - s;
+            // if (lineDiff !== 0) {
+            //     // mean chahge is over 1 line
+            //     diagnosticCollection.get(document.uri)?.forEach(item => {
+            //         const start = item.range.start;
+            //         const end = item.range.end;
+            //         item.range = new Range(new Position(start.line + lineDiff, start.character), new Position(end.line + lineDiff, end.character)) 
+            //     })
+            // }
         })
     } else {
         document = event as TextDocument;
         ranges.push({startLine: 0, endLine: (document.lineCount - 1)})
     }
+    diagnosticCollection.get(document.uri)?.forEach(item => {
+        diagnostics.push(item);
+    })
     ranges.forEach(range => {
         for (let i = range.startLine; i <= range.endLine; i++) {
             const line = document.lineAt(i).text;
@@ -50,16 +62,18 @@ export function updateDiagonstics(event: TextDocumentChangeEvent | TextDocument,
                 diagnostics.push(diagnostic);
                 continue;
             }
-            matchs = sectionTitleRegex.exec(line);
-            if (matchs) {
-                // what happen if matchs does not exist? tested, will get ERROR.
-                // (matchs[1] && !/^[\s;]*$/.test(matchs[1]))
-                if (matchs[2] && !/^\s*$/.test(matchs[2])) {
-                    let range = new Range(i, 0, i, line.length);
-                    const diagnostic = new Diagnostic(range, `After and before of section title should only have space or tab`)
-                    diagnostics.push(diagnostic);
-                }
-            }
+
+            // at ShaderRegex will get a huge error
+            // matchs = sectionTitleRegex.exec(line);
+            // if (matchs) {
+            //     // what happen if matchs does not exist? tested, will get ERROR.
+            //     // (matchs[1] && !/^[\s;]*$/.test(matchs[1]))
+            //     if (matchs[2] && !/^\s*$/.test(matchs[2])) {
+            //         let range = new Range(i, 0, i, line.length);
+            //         const diagnostic = new Diagnostic(range, `After and before of section title should only have space or tab`)
+            //         diagnostics.push(diagnostic);
+            //     }
+            // }
         }
     })
     diagnosticCollection.set(document.uri, diagnostics)

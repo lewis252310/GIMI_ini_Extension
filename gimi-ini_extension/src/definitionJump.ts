@@ -21,7 +21,7 @@ export class GIMIDefinitionProvider implements DefinitionProvider{
                 let line = document.lineAt(i).text;
                 if (inConstantsSection) {
                     if (/\[.*\]/i.test(line)) {
-                        return;
+                        break;
                     }
                     let wordRegex = new RegExp(`${word.replace('$', '\\$')}\\b`, 'i')
                     let matchs = wordRegex.exec(line);
