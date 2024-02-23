@@ -5,7 +5,7 @@
   "author": {
     "name": "AGMG"
   },
-  "version": "0.1.1",
+  "version": "0.2.1",
   "engines": {
     "vscode": "^1.72.0"
   },
@@ -43,13 +43,6 @@
       {
         "language": "gimi-ini",
         "path": "./snippets/gimi-ini.json"
-      }
-    ],
-    "themes": [
-      {
-        "label": "GIMI-ini",
-        "uiTheme": "vs-dark",
-        "path": "./themes/GIMI ini dark-color-theme_building.json"
       }
     ],
     "colors": [

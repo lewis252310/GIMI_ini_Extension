@@ -1,13 +1,20 @@
 # Attention
 The compilation settings related to TS have not been implemented yet.
+
 Therefore, modifying the extension code at the project root may not change anything.
 
 And __**PLEASE**__ look [convertYamlJson.js](./building_tools/convertYamlJson.js) first.
+
 That is a script can convert between YAML and JSON.
+
 Builded this because YAML is more readable them JSON.
+
 And default disable on extension launch **NOW**.
+
 **It Will Override tmLanguage.json Which One Use On GIMI ini Every Debug Execute.**
+
 You can change its default behavior in [launch.json](./.vscode/launch.json)'s `preLaunchTask`
+
 And script running config is in [tasks.json](./.vscode/tasks.json)
 
 ---
@@ -25,18 +32,21 @@ This is a simple extension so not have more features
  - [ ] Error checking
 
 Keyword explanation preview, Default disabled
+
 ![keyword explanation](images/hover_msg_v1.gif)
 
+
 Static highlight preview, Default enabled
+
 ![static highlight](images/static_highlight_v1.png)
 
 > Tip: No more image or animations from now.
 
 ## Requirements
 
-Don't be rude
-Don't make a big deal about it
-Don't jump face with the official
+ - Don't be rude
+ - Don't make a big deal about it
+ - Don't jump face with the official
 
 ## Extension Settings
 
@@ -74,6 +84,12 @@ Very huge changes. They have tow types.
      including but not limited to nesting, area checking, possible range guessing.
 
 I need some color style suggestions, and tmLanguage token namespace regularization...
+
+### 0.2.1
+Added:
+ - Variable auto completion
+ - Variable and section definition jump
+ - Diagnostic for illegal comment
 
 ---
 

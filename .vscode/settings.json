@@ -4,5 +4,6 @@
     },
     "search.exclude": {
         "gimi-ini_extension/out": true
-    }
+    },
+    "typescript.tsc.autoDetect": "off"
 }
