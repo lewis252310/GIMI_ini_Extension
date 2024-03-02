@@ -1,5 +1,7 @@
 
-import { TextDocument, Position, HoverProvider, CancellationToken, Hover, ProviderResult } from 'vscode'
+import { TextDocument, Position, HoverProvider, CancellationToken, Hover, ProviderResult, MarkdownString } from 'vscode'
+
+import { checkRelativePathIsExist } from './util'
 
 
 /**
@@ -7,9 +9,29 @@ import { TextDocument, Position, HoverProvider, CancellationToken, Hover, Provid
  * so this is just a preliminary entry point.
  */
 export class GIMIHoverProvider implements HoverProvider{
-	provideHover(document: TextDocument, position: Position, token: CancellationToken): ProviderResult<Hover> {
+	async provideHover(document: TextDocument, position: Position, token: CancellationToken): Promise<Hover | null | undefined> {
 		if (token.isCancellationRequested) {
 			return;
+		}
+		const line = document.lineAt(position.line);
+		const text = line.text.trim();
+		if (text.startsWith('filename')) {
+			const path = /filename *= *(.+)/i.exec(line.text);
+			if (!path || (path[0].length - path[1].length) + (line.text.length - text.length) > position.character) {
+				return;
+			}
+
+			const checked = await checkRelativePathIsExist(path[1], document.uri.fsPath);
+			if (!checked) {
+				const message = new MarkdownString('This path does not exist...');
+				return new Hover(message);
+			}
+			return;
+		} else if (text.includes('\\')) {
+			const word = document.getText(document.getWordRangeAtPosition(position, /[\$\\\.\w]+/));
+			if (word.includes('\\')) {
+				return new Hover('Tips! When section call cannot jump it means that path is not found.');
+			}
 		}
 		const range = document.getWordRangeAtPosition(position);
 		const word = document.getText(range);
@@ -68,4 +90,34 @@ export function getHoverMessage(document: TextDocument, position: Position): str
 		}
 	}
 	return undefined;
+}
+
+/**
+ * Tell me, Why you want to read the source code?
+ */
+function getASCIIMeme(): MarkdownString {
+	const meme = new MarkdownString();
+	meme.isTrusted = true;
+	meme.appendText('You say whaaaat?\n')
+		.appendText('⠠⠀⠄⣗⡁⠀⠀⠀⢀⢴⢽⢹⢪⡺⡸⣪⢺⡸⣪⢺⡸⣪⢺⡸⣪⢺⡸⣪⢺⡸⡜⣜⢜⢞⢟⣧⣆⢀⠀⠀')
+		.appendText('⣇⡂⢑⢯⣧⠀⡠⣴⡳⡝⡎⡧⡳⡱⡝⣜⢮⣺⣼⣾⡾⣷⢷⡿⣮⣞⣮⣞⡼⣜⢎⢮⡪⡇⣗⢝⢿⣵⡂⠀')
+		.appendText('⠟⣷⣆⢫⢻⣮⡎⡗⣝⢜⡕⣇⢯⣺⣵⣟⡿⣽⣗⣯⢿⢽⢯⣻⣽⣺⣳⢯⢿⡵⣿⢵⢕⣝⢜⢎⢧⢻⢿⣦')
+		.appendText('⠀⠈⢟⣧⣓⢿⣯⡞⣜⢵⢽⡾⣟⣯⢷⡯⣯⢷⣳⢯⢿⢽⣫⣗⣗⣗⢯⢯⣗⡯⣟⡿⣿⣞⡮⡳⡱⣣⢫⣻')
+		.appendText('⠀⠀⡰⣻⡻⣷⣵⢿⣾⣟⣿⣻⡽⣯⢿⢽⢯⢿⢽⡽⣯⣻⣞⢾⣺⢾⣝⣗⡷⣯⢷⣻⣿⠯⡻⣷⡹⣸⢱⡪')
+		.appendText('⠀⠰⣹⢕⡕⡗⡽⣻⣯⣿⣿⢾⡻⠯⠿⡻⢿⢻⠿⡽⡷⡿⡾⡿⡽⡷⢟⠾⠻⠫⠋⢃⠁⠄⠠⢙⢿⡮⡪⡮')
+		.appendText('⠀⡪⣗⡕⣇⢯⡾⡋⠌⢈⠫⠿⢾⡆⡡⠀⠂⠠⠐⢀⠈⠠⠈⠄⠂⠠⠀⡐⢀⣂⠁⠄⠐⢀⠁⠠⠈⢿⣷⣝')
+		.appendText('⠀⡪⣗⢕⣗⡿⢁⠠⠀⠂⠠⠀⠡⠨⡮⠈⠐⠀⢂⠀⠂⢁⠐⠀⠌⠀⠂⡀⢮⢺⡂⠂⡁⠠⠀⡁⠐⢀⢫⣷')
+		.appendText('⠀⠈⠗⢵⣟⠡⠀⠄⠂⠁⠄⠁⢌⡾⢽⠄⡁⠌⠀⠄⠁⠄⢀⠡⠀⡁⡢⣾⠃⠂⣻⠠⠐⠀⡁⠠⠈⡀⠐⣿')
+		.appendText('⠀⠀⠀⣟⢆⠀⢂⠐⠈⠠⠨⣾⣿⢌⠺⣗⠄⠐⢀⣂⢁⠐⢠⢠⠂⣔⡽⡣⣨⡔⠨⣇⠌⠀⠄⠂⠐⠀⠂⣽')
+		.appendText('⠀⠀⠀⣽⡃⠄⠂⢀⠡⠐⢈⡽⢿⣿⣮⢺⣣⢨⡢⡿⡖⣨⣞⢿⣻⡞⣱⣾⡿⠁⠂⡳⢀⠁⡐⠈⡀⠡⢐⣽')
+		.appendText('⠲⡒⠄⢾⣗⠠⠈⡀⠄⣢⢦⣻⢔⡹⡻⡮⠷⣗⠁⣺⡯⠎⠂⠘⢏⣪⣿⠏⡂⣄⣂⣗⠄⠂⠠⠐⠀⡐⣸⣿')
+		.appendText('⡤⡀⡀⠸⣷⡂⡐⢤⡏⠊⠈⠈⠘⢘⢦⢃⠁⠈⠀⠊⠃⠐⠈⠀⢀⢫⠗⠕⠉⠈⠈⠘⢝⡮⡀⠂⡁⣰⡿⠃')
+		.appendText('⠑⠉⠺⡸⠽⣗⢔⢽⠊⠀⣠⣄⡀⠀⠨⣳⠁⡀⠁⡀⠂⠀⠂⠈⢀⢧⡁⠀⣰⣴⡅⠀⠠⢯⡢⣰⣾⡏⡃⠐')
+		.appendText('⠀⣠⣒⢨⢬⢺⢪⢯⡊⠀⠻⠏⠀⠀⠀⣽⠮⢶⢷⠾⡾⠾⡗⠷⠷⡟⡞⣄⢈⠊⠁⣀⢮⣟⢾⣿⠹⢿⣶⡠')
+		.appendText('⡽⣺⡼⡝⡎⡎⡎⡆⡇⣅⢤⣢⢦⡮⣞⡧⣀⢀⠀⠀⠀⠀⡀⡠⣄⢦⢫⢪⢷⡺⣺⢽⢹⢰⢱⢩⢯⡌⠙⢿')
+		.appendText('⡪⡇⡇⡇⡇⡇⡇⣇⢧⡏⠃⠈⠈⢝⣮⢪⢹⢱⢛⢎⢏⢏⠎⡇⡣⡪⡪⣪⠓⠀⢮⡪⡪⡪⡪⡪⡪⡺⣅⠂')
+		.appendText('⢜⢳⢵⢵⢕⣗⢟⠺⢫⡠⠐⠀⠂⠀⠹⣪⢎⡪⡪⡸⡰⡑⡕⢕⣕⢵⠫⠂⢀⠈⠪⣇⢇⢇⢇⢇⢇⢕⢕⡇')
+		.appendText('⡇⡈⠨⢈⢪⠣⠀⠀⠈⠸⠸⢔⢄⢈⠀⡀⠑⠕⢵⠮⠮⠞⠞⠋⠊⠁⢀⠠⠀⡀⠄⠫⣮⢪⢪⢪⢪⠪⡒⡇')
+		.appendText('⡳⡐⡀⢂⢏⠀⠀⠀⠀⠀⠀⠀⠈⠈⠪⠒⠵⠰⡰⢤⡨⡰⡠⡡⡢⠕⠴⠘⠈⠀⠀⠀⠈⠓⠧⢧⢶⠡⠑⠀')
+	return meme;
 }

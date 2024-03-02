@@ -1,23 +1,40 @@
 
 // Maybe need change import from '*' to 'what need', not very like a lot 'vscode.' prefix
-import { ExtensionContext, window, commands, languages, workspace } from 'vscode';
+import { ExtensionContext, window, commands, languages, workspace, RelativePattern, TextDocument } from 'vscode';
 
 import { GIMIHoverProvider } from './hoverMessage';
 import { GIMIFoldingRangeProvider } from './foldingRange';
 import { GIMICompletionItemProvider } from './autoCompletion';
 import { GIMIDefinitionProvider } from './definitionJump';
-import { updateDiagonstics } from './diagnostics';
-import { parseDocumentVariables } from './util';
+import { updateDiagonsticsByDocument } from './diagnostics';
+import { GIMIConfiguration, GIMIWorkspace } from './util';
+import { debounceA } from './debounce'
+
+function updateUserConfiguration() {
+	let parserConfig = workspace.getConfiguration('GIMIini.file').get<number>('parseingAllowedMaximumLines');
+	GIMIConfiguration.parseingAllowedMaximumLines = parserConfig ? parserConfig : 1000;
+	parserConfig = workspace.getConfiguration('GIMIini.file').get<number>('parseingAllowedMaximumCharacters');
+	GIMIConfiguration.parseingAllowedMaximumCharacters = parserConfig ? parserConfig : 30000;
+}
+
 
 
 export function activate(context: ExtensionContext) {
-
-	let activeDocumentVariables: string[] = [];
-	const getVarList = () => activeDocumentVariables;
-
-	
 	console.log('GIMI ini extension has been activated.')
 	window.showInformationMessage('Hi! Here is GIMI ini extension. Until now I only support static highlight. And the default disables any syntax internal processing.');
+
+
+	context.subscriptions.push(workspace.onDidChangeConfiguration(event => {
+		if (event.affectsConfiguration('GIMIini.file.parseingAllowedMaximumLines')) {
+			updateUserConfiguration();
+		}
+		if (event.affectsConfiguration('GIMIini.file.parseingAllowedMaximumCharacters')) {
+			updateUserConfiguration();
+		}
+	}))
+
+	updateUserConfiguration();
+
 
 	let disposable = commands.registerCommand('gimi-ini.helloWorld', () => {
 		window.showInformationMessage('Why you know I have this command?!');
@@ -30,8 +47,8 @@ export function activate(context: ExtensionContext) {
 	));
 
 	context.subscriptions.push(languages.registerCompletionItemProvider('gimi-ini', 
-		new GIMICompletionItemProvider(getVarList),
-		'$'
+		new GIMICompletionItemProvider,
+		'$', '['
 	));
 
 	context.subscriptions.push(languages.registerDefinitionProvider('gimi-ini',
@@ -42,32 +59,66 @@ export function activate(context: ExtensionContext) {
 		new GIMIHoverProvider
 	));
 
+	// languages.setLanguageConfiguration('gimi-ini', {wordPattern: /(-?\d*\.\d\w*)|([^\`\~\!\@\#\%\^\&\*\(\)\-\=\+\[\{\]\}\|\;\:\'\"\,\.\<\>\/\?\s]+)/g})
 
 	const diagnosticCollection = languages.createDiagnosticCollection('gimi-ini');
+	context.subscriptions.push(diagnosticCollection);
+
+	// A very crude debounced implementation
+	const debouncedOnDidChange = debounceA((document: TextDocument) => {
+		GIMIWorkspace.updateFile(document.uri);
+		updateDiagonsticsByDocument(document, diagnosticCollection);
+	})
+
 	const didChangeDisposable = workspace.onDidChangeTextDocument(event => {
-		updateDiagonstics(event, diagnosticCollection);
-		// this will trigger loop entire file every change event, BAD
-		activeDocumentVariables = parseDocumentVariables(event.document)
+		if (event.contentChanges.length === 0) {
+			return;
+		}
+		debouncedOnDidChange(event.document);
+		// GIMIWorkspace.updateFile(event.document.uri);
+		// updateDiagonsticsByDocument(event.document, diagnosticCollection);
 	})
 	context.subscriptions.push(didChangeDisposable);
-	const didOpenDisposable = workspace.onDidOpenTextDocument(document => {
-		updateDiagonstics(document, diagnosticCollection);
-		activeDocumentVariables = parseDocumentVariables(document);
-	})
-	context.subscriptions.push(didOpenDisposable);
-	const didChangeActiveTextEditor = window.onDidChangeActiveTextEditor(editor => {
-		if (editor) {
-			updateDiagonstics(editor.document, diagnosticCollection);
-			activeDocumentVariables = parseDocumentVariables(editor.document);
+
+	context.subscriptions.push(workspace.onDidOpenTextDocument(document => {
+		if (!GIMIWorkspace.findFile(document.uri)) {
+			GIMIWorkspace.addFile(document.uri);
 		}
-	})
-	context.subscriptions.push(didChangeActiveTextEditor);
+	}));
+
+	context.subscriptions.push(window.onDidChangeActiveTextEditor(editor => {
+		if (editor) {
+			updateDiagonsticsByDocument(editor.document, diagnosticCollection);
+		}
+	}));
 
 	if (window.activeTextEditor) {
-		let document = window.activeTextEditor.document
-		updateDiagonstics(document, diagnosticCollection);
-		activeDocumentVariables = parseDocumentVariables(document);
+		for (const document of workspace.textDocuments) {
+			if (!GIMIWorkspace.findFile(document.uri)) {
+				GIMIWorkspace.addFile(document.uri);
+			}
+		}
+		updateDiagonsticsByDocument(window.activeTextEditor.document, diagnosticCollection);
 	}
+
+	// window.visibleTextEditors.forEach(editor => {
+	// 	const document = editor.document;
+	// 	const workspaceFolder = workspace.getWorkspaceFolder(document.uri);
+	// 	if (!workspaceFolder) {
+	// 		GIMIWorkspace.addSingleFile(document.uri);
+	// 	}
+	// })
+
+	let folder = workspace.workspaceFolders?.[0];
+	if (folder) {
+		let pattern = new RelativePattern(folder, '**/*.ini');
+		workspace.findFiles(pattern).then(files => {
+			files.forEach(file => {
+				GIMIWorkspace.addProjectFile(file);
+			})
+		})
+	}
+
 }
 
 export function deactivate() {}

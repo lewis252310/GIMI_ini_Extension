@@ -27,10 +27,11 @@ A famous anime game mod ini config file support extension
 
 This is a simple extension so not have more features
  - [x] Highlighting
- - [x] Keyword range check
+ - [ ] Keyword range check
  - [ ] Simple keyword explanation
  - [x] Error checking
  - [x] Code block floding
+ - [x] Definition jump
 
 
 Static highlight preview.
@@ -38,9 +39,14 @@ Static highlight preview.
 ![static_highlight](images/static_highlight_v1.png)
 
 
-Comment position check.
+Comment position diagnostics.
 
 ![comment_diagnostic](images/comment_diagnostic.jpg)
+
+
+Also section call diagnostics.
+
+![section_call_diagnostic](images/section_call_diagnostic.jpg)
 
 
 Keyword explanation preview, Default disabled.
@@ -53,16 +59,30 @@ Auto completion for variable.
 ![auto_completion_variable](images/auto_completion_variable.gif)
 
 
-Definition jump for variables and sections.
+Simple section snippets.
+
+![section_snippets](images/section_snippets.gif)
+
+
+Definition jump for variables and sections. If open as project (workspace), jumping between files is also supported.
 
 ![definition_jump_variable](images/definition_jump_variable.gif)
 
-![definition_jump_variable](images/definition_jump_section.gif)
+![definition_jump_section](images/definition_jump_section.gif)
+
+![definition_jump_section_files](images/definition_jump_section_files.gif)
 
 
 Code folding for section and `if else` block.
 
 ![code_folding](images/code_folding.gif)
+
+
+A comment separation type, just like Markdown's horizontal line.
+
+Of course more description on it. Leave a empty line above and below to work.
+
+![separation_folding](images/separation_folding.jpg)
 
 
 > Tip: No more image or animations from now.

@@ -30,142 +30,39 @@
 		],
 		"description":"A Constants snippet"
 	},
-	"Constants sections": {
+	"Dividing line": {
 		"scope": "gimi-ini",
-		"prefix": "constants",
+		"prefix": "dividing",
 		"body": [
-			"[Constants]",
-			"global \\$$1"
+			"; $1 --------"
 		],
-		"description":"A Constants snippet"
-	},
-	"Key sections": {
-		"scope": "gimi-ini",
-		"prefix": "key",
-		"body": [
-			"[Key$1]",
-			"key = $2",
-			"condition ="
-		],
-		"description":"A Key snippet"
-	},
-	"Presend sections": {
-		"scope": "gimi-ini",
-		"prefix": "present",
-		"body": [
-			"[Present]",
-			"$1"
-		],
-		"description":"A Presend snippet"
-	},
-	"TextureOverride sections": {
-		"scope": "gimi-ini",
-		"prefix": "texture",
-		"body": [
-			"[TextureOverride$1${2|Position,Blend,Texcoord,IB,Head,Body,Dress,Fase,VertexLimitRaise|}]",
-			"hash = $3",
-			"match_first_index = 0",
-			"run ="
-		],
-		"description":"A TextureOverride snippet"
-	},
-	"ShaderOverride sections": {
-		"scope": "gimi-ini",
-		"prefix": "shader",
-		"body": [
-			"[ShaderOverride$1]",
-			"hash = ${TM_SELECTED_TEXT:$2}",
-			"allow_dupliplicate_hash = yes"
-		],
-		"description":"A ShaderOverride snippet"
-	},
-	"CommandList sections": {
-		"scope": "gimi-ini",
-		"prefix": "cmd",
-		"body": [
-			"[CommandList$1]",
-			"if",
-			"\t",
-			"else",
-			"\t",
-			"endif"
-		],
-		"description": "A CommandList section"
-	},
-	"Resources sections": {
-		"scope": "gimi-ini",
-		"prefix": "resources",
-		"body": [
-			"[Resources$1]",
-			"type =",
-			"data ="
-		],
-		"description": "A Resources section"
+		"description": "A dividing line can use on folding huge part"
 	},
 	"Default if condition": {
 		"scope": "gimi-ini",
-		"prefix": "if condition",
+		"prefix": "if",
 		"body": [
 			"if ${TM_SELECTED_TEXT:$1}",
-			"\t$2",
-			"else",
-			"\t",
+			"\t$0",
 			"endif"
 		],
-		"description":"A 'if' block, support condition pre-selection"
+		"description":"If Statement, support condition pre-selection"
 	},
 	"Default elif condition": {
 		"scope": "gimi-ini",
-		"prefix": "if else-if condition",
+		"prefix": "ifelse",
 		"body": [
 			"if ${TM_SELECTED_TEXT:$1}",
-			"\t$2",
-			"else if $1",
-			"\t",
-			"endif"
-		],
-		"description":"A 'if-else if' block, support condition pre-selection"
-	},
-	"Default if content": {
-		"scope": "gimi-ini",
-		"prefix": "if content",
-		"body": [
-			"if $1",
-			"\t${TM_SELECTED_TEXT}",
+			"\t$0",
 			"else",
 			"\t",
 			"endif"
 		],
-		"description":"A 'if' block, support content pre-selection"
-	},
-	"Default elif content": {
-		"scope": "gimi-ini",
-		"prefix": "if else-if content",
-		"body": [
-			"if $1",
-			"\t${TM_SELECTED_TEXT}",
-			"else if $2",
-			"\t",
-			"endif"
-		],
-		"description":"A 'if-else if' block, support content pre-selection"
-	},
-	"Folding area": {
-		"scope": "gimi-ini",
-		"prefix": "folding selected",
-		"body": [
-			// "${TM_SELECTED_TEXT/^(.+)|.*/${1:-}/}",
-			// "${TM_SELECTED_TEXT/((?<=^)[)(\\[.+\\])/$1/gm}",
-			// "${TM_FILENAME/(.*)\\..+$/$1/}",
-			";{",
-			"${TM_SELECTED_TEXT:$1}",
-			";}"
-		],
-		"description":"A Key snippet"
+		"description":"If-Else Statement, support condition pre-selection"
 	},
 	"Test Opject": {
 		"scope": "gimi-ini",
-		"prefix": "just a test",
+		"prefix": "just test",
 		"body": [
 			"${TM_CURRENT_LINE:$1}",
 			"endtest"

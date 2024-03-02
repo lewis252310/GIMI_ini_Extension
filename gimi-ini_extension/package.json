@@ -20,7 +20,7 @@
     "type": "git",
     "url": "https://github.com/lewis252310/GIMI_ini_Extension.git"
   },
-  "version": "0.2.2",
+  "version": "0.3.7",
   "engines": {
     "vscode": "^1.81.0"
   },
@@ -47,6 +47,28 @@
           ".gimini"
         ],
         "configuration": "./language-configuration.json"
+      }
+    ],
+    "configuration": [
+      {
+        "title": "GIMI ini",
+        "properties": {
+          "GIMIini.file.parseingAllowedMaximumLines": {
+            "type": "number",
+            "default": 1000,
+            "description": "Maximum lines in a single file allowed by the parser. '-1' to allowed infinite lines :)\nTake closer one compared to maximum characters"
+          },
+          "GIMIini.file.parseingAllowedMaximumCharacters": {
+            "type": "number",
+            "default": 30000,
+            "description": "Maximum characters in a single file allowed by the parser. '-1' to allowed infinite characters :)\nTake closer one compared to maximum lines"
+          },
+          "GIMIini.parser.parseingDebounceInterval": {
+            "type": "number",
+            "default": -1,
+            "description": "Debounce. Each parse must be greater than this time interval. Unit is seconds, decimal allowed, any negative number means disabled."
+          }
+        }
       }
     ],
     "commands": [
