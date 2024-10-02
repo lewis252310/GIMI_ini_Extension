@@ -1,10 +1,70 @@
 {
     "version": "2.0.0",
     "tasks": [
+      // {
+      //   "label": "compile_tmLanguage_js-yaml",
+      //   "type": "shell",
+      //   "command": "npx js-yaml",
+      //   "args": [
+      //     "${workspaceFolder}/gimi-ini_extension/syntaxes/gimi_ini.tmLanguage_v0.1.4.yaml",
+      //     ">",
+      //     "${workspaceFolder}/gimi-ini_extension/syntaxes/gimi_ini.tmLanguage.json"
+      //   ],
+      //   "options": {
+      //     "cwd": "${workspaceFolder}/gimi-ini_extension"
+      //   },
+      //   "problemMatcher": []
+      // },
+      // {
+      //   "label": "compile_tmLanguage_js",
+      //   "type": "shell",
+      //   "command": "node ./building_tools/convertYamlJson y2j",
+      //   "problemMatcher": []
+      // },
       {
-        "label": "compile_tmLanguage",
+        "label": "compile_tmLanguage_py",
         "type": "shell",
-        "command": "node ./building_tools/convertYamlJson y2j",
+        "command": "python",
+        "args": [
+          "${workspaceFolder}/building_tools/convertYamlJson.py",
+          "y2j",
+          "--input_file",
+          "${workspaceFolder}/gimi-ini_extension/syntaxes/gimi_ini.tmLanguage_v0.1.7-B.yaml",
+          "--output_file",
+          "${workspaceFolder}/gimi-ini_extension/syntaxes/gimi_ini.tmLanguage.json"
+        ],
+        "problemMatcher": []
+      },
+      {
+        "type": "npm",
+        "script": "watch",
+        "path": "gimi-ini_extension",
+        "problemMatcher": "$tsc-watch",
+        "isBackground": true,
+        "presentation": {
+          "reveal": "never"
+        },
+        "group": {
+          "kind": "build",
+          "isDefault": true
+        },
+        // "runOptions": {
+        //   "runOn": "folderOpen"
+        // }
+      },
+      {
+        "label": "Package_GIMI_INI_extension_bat",
+        "type": "shell",
+        "command": "${workspaceFolder}/building_tools/package_extension.bat",
+        "problemMatcher": []
+      },
+      {
+        "label": "Package_GIMI_INI_extension_task",
+        "type": "shell",
+        "command": "Set-ExecutionPolicy Bypass -Scope Process; vsce package",
+        "options": {
+          "cwd": "${workspaceFolder}/gimi-ini_extension"
+        },
         "problemMatcher": []
       }
     ]

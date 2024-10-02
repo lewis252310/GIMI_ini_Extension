@@ -1,6 +1,8 @@
-import path from 'path';
 import { CancellationToken, Definition, DefinitionProvider, Location, LocationLink, MarkdownString, Position, ProviderResult, Range, TextDocument, Uri, window, workspace } from 'vscode'
-import { GIMIRule, GIMIWorkspace, checkRelativePathIsExist } from './util';
+import { GIMIWorkspace } from "./GIMI/GIMIWorkspace";
+import { GIMIDocumentParser, TextToken } from "./GIMI/parser"
+import { isRegularSection } from './GIMI/GIMISectionTitle';
+import { encodeToGIMIString, GIMIString } from './GIMI/GIMIString';
 
 export class GIMIDefinitionProvider implements DefinitionProvider{
     provideDefinition(document: TextDocument, position: Position, token: CancellationToken): ProviderResult<Definition | LocationLink[]> {
@@ -12,108 +14,93 @@ export class GIMIDefinitionProvider implements DefinitionProvider{
             return;
         }
 
-        let word: string;
-        let range = undefined;
-        range = document.getWordRangeAtPosition(position, /(?:[\w]+|\$)\\[\w\\\.]+/i);
-        if (range) {
-            // is a section or variable call
-            word = document.getText(range);
-            const matchs = [...word.matchAll(/[\w\.]+/g)];
-            if (!GIMIRule.getSectionNamespaces().includes(matchs[0][0])) {
-                return;
-            }
-            const name = matchs[0][0] + matchs.at(-1)?.[0];
-            const namespace = matchs.slice(1, -1).map(m => m[0]).join('\\');
-            console.log(`name: ${name}, ns: ${namespace}`);
-            if (!namespace.includes('.')) {                
-                for (const file of GIMIWorkspace.getProjectFiles()) {
-                    if (file.gimiNamespace === namespace) {
-                        for (const section of file.getSections()) {
-                            if (section.name.toLowerCase() === name.toLowerCase()) {
-                                const titleStart = section.range.start;
-                                const startP = titleStart.translate(0, 1);
-                                const endP = titleStart.translate(0, section.name.length + 1);
-                                // return new Location(file.uri, new Range(startP, endP));
-                                const _r: LocationLink[] = []
-                                _r.push({
-                                    targetUri: file.uri,
-                                    targetRange: new Range(startP, endP),
-                                    originSelectionRange: range,
-                                    targetSelectionRange: new Range(titleStart.translate(0, 3), titleStart.translate(0, section.name.length - 3))
-                                })
-                                return _r;
-                            }
-                        }
-                    }
-                }
-                return [{
-                    targetUri: document.uri,
-                    targetRange: range,
-                    originSelectionRange: range,
-                }];
-            }
+        const file = GIMIWorkspace.findFile(document.uri);
+        if (!file) {
             return;
         }
-        range = document.getWordRangeAtPosition(position, /\$[\w]+/);
-        if (range) {
-            // is a variable
-            word = document.getText(range);
-            let inConstantsSection = false;
-            for (let i = 0; i < document.lineCount; i++) {
-                let line = document.lineAt(i).text;
-                if (inConstantsSection) {
-                    if (/\[.*\]/i.test(line)) {
-                        break;
-                    }
-                    let wordRegex = new RegExp(`${word.replace('$', '\\$')}\\b`, 'i')
-                    let matchs = wordRegex.exec(line);
-                    if (matchs) {
-                        let start: Position = new Position(i, matchs.index);
-                        let end: Position = new Position(i, matchs.index + matchs[0].length);
-                        return new Location(document.uri, new Range(start, end));
-                    }
-                }
-                else if (/^\[Constants\]/i.test(line)) {
-                    inConstantsSection = true;
-                    continue;
-                }
-            }
-            return;
-        }
-        range = document.getWordRangeAtPosition(position, /(?<=.*\=.*)(CommandList|Resource).+/i);
-        if (range) {
-            // is a section title
-            for (let i = 0; i < document.lineCount; i++) {
-                let line = document.lineAt(i).text;
-                word = document.getText(range);
-                // console.log(word);
-                if (line.includes('[') && line.includes('[')) {
-                    let wordRegex = new RegExp(`\\[${word}\\]`, 'i')
-                    let matchs = wordRegex.exec(line);
-                    if (matchs) {
-                        let start: Position = new Position(i, matchs.index);
-                        let end: Position = new Position(i, matchs.index + matchs[0].length);
-                        return new Location(document.uri, new Range(start, end));
-                    }
-                }
-            }
+        const section = file.findSectionFromPosition(position);
+        if (!section) {
+            // maybe is a namespace?
             return;
         }
         const line = document.lineAt(position.line);
-        const text = line.text.trim();
-        if (text.toLowerCase().startsWith('filename')) {
-            const textOffset = line.text.length - text.length;
-            const item = /filename\s*=\s*(.+)/.exec(text);
-            if (!item) {
+
+        // a inter variable
+        let wordRange = document.getWordRangeAtPosition(position, /\$\w+\b/);
+        if (wordRange) {
+            const word = document.getText(wordRange);
+            // console.log("get word", word);
+            const vari = file.findGlobalVariable(encodeToGIMIString(word.slice(1)));
+            if (!vari) {
                 return;
             }
-            checkRelativePathIsExist(item[1], document.uri.fsPath).then(checked => {
-                if (!checked) {
-                    window.showErrorMessage(`ERROR: The path '${item[1]}' does not exist.`);
-                }
-            });
+            return [{
+                targetUri: document.uri,
+                targetRange: vari.range,
+                originSelectionRange: wordRange
+            }];
         }
-        // throw new Error('Method not implemented.');
-        return; 
+        
+        // a outer variable
+        wordRange = document.getWordRangeAtPosition(position, /\$(?:\\\w+)+/);
+        if (wordRange) {
+            const word = document.getText(wordRange);
+            // console.log("get word", word);
+            const parts = word.slice(2).split("\\");
+            const name = parts.splice(-1, 1)[0];
+            const path = parts.join("\\");
+            const targetFile = file.rootProject.findFileFromNamespace(encodeToGIMIString(path));
+            const targetVar = targetFile?.findGlobalVariable(encodeToGIMIString(name));
+            if (!targetVar) {
+                return;
+            }
+            return [{
+                targetUri: targetFile!.uri,
+                targetRange: targetVar.range,
+                originSelectionRange: wordRange
+            }];
+        }
+
+        // dont use now.
+        // const lineText = line.text.trim();
+        // if (lineText.toLowerCase().startsWith("filename")) {
+        //     const filePathRegex = /filename *= *(.+)/;
+        //     const match = lineText.match(filePathRegex);
+        //     if (!match) {
+        //         return;
+        //     }
+        //     checkRelativePathIsExist(match[1], document.uri.fsPath).then(checked => {
+        //         if (!checked) {
+        //             window.showErrorMessage(`ERROR: The path '${match[1]}' does not exist.`);
+        //         }
+        //     });
+        // }
+
+        // maybe a outer section
+        wordRange = document.getWordRangeAtPosition(position, /[\w.]+(?:\\[\w.]+)+/);
+        if (wordRange) {
+            const word = document.getText(wordRange);
+            console.log("get word", word);
+            return;
+        }
+
+        // maybe a inter section
+        wordRange = document.getWordRangeAtPosition(position, /(?<!\[)\b[\w.]+\b(?!\])/);
+        if (wordRange) {
+            const word = document.getText(wordRange);
+            // console.log("get word", word);
+            const section = file.findSection(encodeToGIMIString(word));
+            if (!section) {
+                return;
+            }
+            return [{
+                targetUri: file.uri,
+                targetRange: section.titleRange,
+                originSelectionRange: wordRange
+            }]
+        }
+
+        // console.log("Stop at here");
+        return;
     }
 }

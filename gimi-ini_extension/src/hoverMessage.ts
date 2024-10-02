@@ -2,6 +2,10 @@
 import { TextDocument, Position, HoverProvider, CancellationToken, Hover, ProviderResult, MarkdownString } from 'vscode'
 
 import { checkRelativePathIsExist } from './util'
+import { GIMIWorkspace } from './GIMI/GIMIWorkspace';
+import { parseSectionTypeInfo } from './GIMI/GIMISectionTitle';
+import { encodeToGIMIString } from './GIMI/GIMIString';
+import { isCommentText } from './GIMI/parser';
 
 
 /**
@@ -13,83 +17,104 @@ export class GIMIHoverProvider implements HoverProvider{
 		if (token.isCancellationRequested) {
 			return;
 		}
-		const line = document.lineAt(position.line);
-		const text = line.text.trim();
-		if (text.startsWith('filename')) {
-			const path = /filename *= *(.+)/i.exec(line.text);
-			if (!path || (path[0].length - path[1].length) + (line.text.length - text.length) > position.character) {
+		
+        const file = GIMIWorkspace.findFile(document.uri);
+        if (!file) {
+            return;
+        }
+
+		let wordRange = document.getWordRangeAtPosition(position, /\$\w+\b/);
+        if (wordRange) {
+            const word = document.getText(wordRange);
+            // console.log("get word", word);
+            const vari = file.findGlobalVariable(encodeToGIMIString(word.slice(1)));
+            if (!vari) {
+				return new Hover(`The variable '${word}' is not exist.`, wordRange);
+            }
+        }
+
+		wordRange = document.getWordRangeAtPosition(position, /\b[\w.]+\b/);
+		if (wordRange) {
+			const secTitle = document.getText(wordRange)
+			const secInfo = parseSectionTypeInfo(secTitle);
+			if (!secInfo.legal) {
+				return;
+			}
+			const section = file.findSection(encodeToGIMIString(secTitle));
+			if (!section) {
+				return;
+			}
+			const {start: secStPos} = section.range;
+			if (secStPos.line < 1) {
 				return;
 			}
 
-			const checked = await checkRelativePathIsExist(path[1], document.uri.fsPath);
-			if (!checked) {
-				const message = new MarkdownString('This path does not exist...');
-				return new Hover(message);
+			const secDescp: string[] = [];
+			const stLineIdx = section.range.start.line - 1;
+			// const docsLastLIdx = document.lineCount - 1;
+			for (let i = stLineIdx; i > 0; i--) {
+				const line = document.lineAt(i);
+				const text = line.text.trim();
+				// if (line.isEmptyOrWhitespace) {
+				// 	break;
+				// }
+				if (!isCommentText(text)) {
+					break;
+				}
+				secDescp.push(text.slice(1));
 			}
-			return;
-		} else if (text.includes('\\')) {
-			const word = document.getText(document.getWordRangeAtPosition(position, /[\$\\\.\w]+/));
-			if (word.includes('\\')) {
-				return new Hover('Tips! When section call cannot jump it means that path is not found.');
+			if (secDescp.length === 0) {
+				return;
 			}
+			const msg = new MarkdownString();
+			msg.appendCodeblock(section.rawTitle, "gimi-ini");
+			// msg.appendMarkdown(`${section.rawTitle}\n\n`);
+			secDescp.reverse().forEach(_lTxt => {
+				msg.appendMarkdown(_lTxt);
+			})
+			return new Hover(msg, wordRange);
 		}
+
+		// const line = document.lineAt(position.line);
+		// const text = line.text.trim();
+		// if (text.startsWith('filename')) {
+		// 	const path = /\s*filename *= *(.+)/di.exec(line.text);
+		// 	// if (!path || (path[0].length - path[1].length) + (line.text.length - text.length) > position.character) {
+		// 	if (!path ) {
+		// 		return;
+		// 	}
+
+		// 	const checked = await checkRelativePathIsExist(path[1], document.uri.fsPath);
+		// 	if (!checked) {
+		// 		const message = new MarkdownString('This path does not exist...');
+		// 		return new Hover(message);
+		// 	}
+		// 	return;
+		// }
+
 		const range = document.getWordRangeAtPosition(position);
 		const word = document.getText(range);
+		const section = file.findSectionFromPosition(position);
 		let message = undefined;
-		if (word === 'hash') {
+		if (word === "hash") {
 			// if (isInTextureOverrideSection(document, position)) {
-			// 	message = `The value of the 'hash' should be a hash value.\nYou can find the hash value from the hunting mode.`;
+			// 	message = `The value of the "hash" should be a hash value.\nYou can find the hash value from the hunting mode.`;
 			// } else {
-			// 	message = `⚠️The 'hash' keyword should only appear in 'Override' section and will only work in 'Override' section.`;
+			// 	message = `⚠️The "hash" keyword should only appear in "Override" section and will only work in "Override" section.`;
 			// }
-			return new Hover('Hehehehe...');
-		} else if (word === 'store') {
-			return new Hover(`You should not use this, unless you know what are you doing for`);
+			return new Hover("Haaaaaaash.");
+		} else if (word === "store") {
+			const msg = new MarkdownString();
+			msg.appendMarkdown("**You should not use this, unless you know what are you doing for**")
+			return new Hover(msg);
+		} else if (word === "klee") {
+			return new Hover(getASCIIMeme());
 		}
-		
 		if (message !== undefined) {
 			return new Hover(message);
 		}
-		// throw new Error('Method not implemented.');
 		return;
 	}
-}
-
-
-/**
- * A simple section positioning feasibility test. __!!! Without any optimization !!!__
- */
-function isInTextureOverrideSection(document: TextDocument, position: Position): boolean {
-    const sectionRegex = new RegExp(`\\[TextureOverride.+\\]`, 'i');
-	for (let i = position.line; i >= 0; i--) {
-        const lineText = document.lineAt(i).text;
-        if (lineText.includes('[') && lineText.includes(']')) {
-            if (sectionRegex.test(lineText)) {
-				return true;
-			} else {
-				break;
-			}
-        } else if (position.line - i >= 200) {
-			break;
-		}
-    }
-    return false;
-}
-
-/**
- * A simple hover message provider feasibility test. __!!! Without any optimization !!!__
- */
-export function getHoverMessage(document: TextDocument, position: Position): string | undefined {
-	const range = document.getWordRangeAtPosition(position);
-	const word = document.getText(range);
-	if (word === 'hash') {
-		if (isInTextureOverrideSection(document, position)) {
-			return `The value of the 'hash' should be a hash value.\nYou can find the hash value from the hunting mode.`;
-		} else {
-			return `⚠️The 'hash' keyword should only appear in 'Override' section and will only work in 'Override' section.`;
-		}
-	}
-	return undefined;
 }
 
 /**

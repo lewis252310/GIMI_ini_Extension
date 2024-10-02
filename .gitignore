@@ -2,6 +2,7 @@
 **/out/
 
 *.vsix
+*.bat
 
 *.zip
 *.7z

@@ -9,7 +9,10 @@
                 "--disable-extensions",
                 "--extensionDevelopmentPath=${workspaceFolder}/gimi-ini_extension"
             ],
-            // "preLaunchTask": "compile_tmLanguage"
+			"outFiles": [
+				"${workspaceFolder}/gimi-ini_extension/out/**/*.js"
+			],
+            // "preLaunchTask": "compile_tmLanguage_py"
         },
         {
             "name": "Launch Extension",

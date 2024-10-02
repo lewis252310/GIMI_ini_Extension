@@ -3,7 +3,8 @@
   "displayName": "GIMI ini",
   "description": "GIMI ini Extension",
   "author": {
-    "name": "AGMG"
+    "name": "!someone name has 63B long?",
+    "url": "https://github.com/lewis252310"
   },
   "contributors": [
     {
@@ -11,8 +12,7 @@
       "url": "https://github.com/SinsOfSeven"
     },
     {
-      "name": "!someone name has 63B long?",
-      "url": "https://github.com/lewis252310"
+      "name": "AGMG (Team)"
     }
   ],
   "homepage": "https://github.com/lewis252310/GIMI_ini_Extension",
@@ -20,7 +20,7 @@
     "type": "git",
     "url": "https://github.com/lewis252310/GIMI_ini_Extension.git"
   },
-  "version": "0.3.7",
+  "version": "0.4.0",
   "engines": {
     "vscode": "^1.81.0"
   },
@@ -73,8 +73,13 @@
     ],
     "commands": [
       {
-        "command": "gimi-ini-ts.helloWorld",
-        "title": "Hello World"
+        "command": "gimi-ini.helloWorld",
+        "title": "Hello World",
+        "shortTitle": "GIMI hello world"
+      },
+      {
+        "command": "gimi-ini.testTrigger",
+        "title": "GIMI testing cmd"
       }
     ],
     "grammars": [
