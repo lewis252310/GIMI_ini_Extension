@@ -458,15 +458,14 @@ function analyzeSectionTitle(line: TextLine): RelativeDiagnostic[] {
             const mStPos = lineRelSt.translate(0, u2.index + _m.index);
             _r.push({
                 relRng: new Range(mStPos, mStPos.translate(0, _m[0].length)),
-                info: "Section can't use this char.", lv: DiagnosticSeverity.Error
+                info: `Use '${_m[0]}' in title can cause problems.`, lv: DiagnosticSeverity.Warning
             });                        
         }
     }
     if (ux.length !== 0) {
         _r.push({
             relRng: new Range(lineRelSt.translate(0, (u3.index + u3[0].length - 1)), lineRelEd),
-            info: "No annotations are allowed after the section title.",
-            lv: DiagnosticSeverity.Error
+            info: "No annotations are allowed after the section title.", lv: DiagnosticSeverity.Error
         });
     }
     return _r;

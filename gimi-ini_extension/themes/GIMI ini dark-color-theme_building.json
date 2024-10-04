@@ -19,7 +19,16 @@
 				"string constant.other.placeholder"
 			],
 			"settings": {
-				"foreground": "#EEFFFF"
+				"foreground": "#5a93e8"
+			}
+		},
+		{
+			"name": "Variable language",
+			"scope": [
+				"variable.language"
+			],
+			"settings": {
+				"foreground": "#045ce0"
 			}
 		},
 		{

@@ -7,17 +7,21 @@ import { GIMIFoldingRangeProvider } from './foldingRange';
 import { GIMICompletionItemProvider } from './autoCompletion';
 import { GIMIDefinitionProvider } from './definitionJump';
 import { GIMIDiagnosticsManager } from './diagnostics';
-import { GIMIConfiguration, setTextDecorations, GIMIIfElseBlockHighlight } from './util';
+import { GIMIConfiguration } from './util';
 import { GIMIWorkspace } from './GIMI/GIMIWorkspace'
 import { debounceA } from './debounce'
-import { LowString, GIMIString } from './GIMI/GIMIString'
 import path from 'path';
 
 function updateUserConfiguration() {
-	let parserConfig = workspace.getConfiguration('GIMIini.file').get<number>('parseingAllowedMaximumLines');
-	GIMIConfiguration.parseingAllowedMaximumLines = parserConfig ? parserConfig : 1000;
-	parserConfig = workspace.getConfiguration('GIMIini.file').get<number>('parseingAllowedMaximumCharacters');
-	GIMIConfiguration.parseingAllowedMaximumCharacters = parserConfig ? parserConfig : 30000;
+	const config = workspace.getConfiguration("GIMIini");
+	GIMIConfiguration.parseingAllowedMaximumLines = config.get<number>("file.parseingAllowedMaximumLines") ?? 1000;
+	GIMIConfiguration.parseingAllowedMaximumCharacters = config.get<number>("parseingAllowedMaximumCharacters") ?? 30000;
+}
+
+function initUserConfiguration() {
+	const config = workspace.getConfiguration("GIMIini");
+	GIMIConfiguration.diagnostics.conditionExp = config.get<boolean>("diagnostics.conditionExpression") ?? true;
+	updateUserConfiguration();
 }
 
 function testTriggerFunc() {
@@ -31,20 +35,20 @@ function testTriggerFunc() {
 
 export function activate(context: ExtensionContext) {
 	console.log('== GIMI ini extension has been activated. ==')
-	window.showInformationMessage('Hi! Here is GIMI ini extension. Until now I only support static highlight. And the default disables any syntax internal processing.');
+	// window.showInformationMessage('Hi! Here is GIMI ini extension. Until now I only support static highlight. And the default disables any syntax internal processing.');
 
 	// ========================================================
 	//                      Setting declare
 	// ========================================================
 	context.subscriptions.push(workspace.onDidChangeConfiguration(event => {
-		if (event.affectsConfiguration('GIMIini.file.parseingAllowedMaximumLines')) {
+		if (event.affectsConfiguration("GIMIini.file.parseingAllowedMaximumLines")) {
 			updateUserConfiguration();
 		}
-		if (event.affectsConfiguration('GIMIini.file.parseingAllowedMaximumCharacters')) {
+		if (event.affectsConfiguration("GIMIini.file.parseingAllowedMaximumCharacters")) {
 			updateUserConfiguration();
 		}
 	}))
-	updateUserConfiguration();
+	initUserConfiguration();
 
 	// ========================================================
 	//                 Contributes and Listener
@@ -97,6 +101,9 @@ export function activate(context: ExtensionContext) {
 		 * but now just very simple method to block it
 		 */
 		if (event.contentChanges.length === 0) {
+			return;
+		}
+		if (event.document.languageId !== 'gimi-ini') {
 			return;
 		}
 		// debouncedOnDidChange(event.document);

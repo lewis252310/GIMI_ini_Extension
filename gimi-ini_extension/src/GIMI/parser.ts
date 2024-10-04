@@ -1,4 +1,5 @@
 import { Range, Position, TextDocument, DiagnosticSeverity, TextLine } from "vscode";
+import { GIMIConfiguration } from "../util";
 
 export type RelativeDiagnostic = {
     relRng: Range,
@@ -117,36 +118,49 @@ class TextTokenComposite {
 type ParserToken = TextToken | TextTokenComposite;
 
 
-type ParserTokenType = "var" | "val" | "keyW" | "arithOp" | "compOp" | "logiOp" | "expr" | "parenL" | "parenR" | "unknow";
+type ParserTokenType = "var" | "val" | "keyW" | "arithOp" | "signOp" | "negaOp" | "compOp" | "logiOp" | "illeOp" | "expr" | "parenL" | "parenR" | "unknow";
 // variable, value, key word, arithmetic operators, comparison operators, logical operators, expression, left parenthese, right parenthese, unknow;
 
+/**
+ * for now, all of expr, var, val, keyword, number are val
+ */
 function judgeConditionType(token: ParserToken): ParserTokenType {
     if (token instanceof TextTokenComposite) {
-        // return "expression";
-        return "expr";
+        // return "expr";
+        return "val";
     }
     const tt = token.txt;
-    if (["==", "!=", "!==", '<', "<=", '>', ">="].includes(tt)) {
+    if (["==", "===", "!=", "!==", '<', "<=", '>', ">="].includes(tt)) {
         // comparison
         return "compOp";
-    } else if (['+', '-', '*', "**", '/', "//", '%'].includes(tt)) {
+    } else if (tt.startsWith('!') && tt.split('').every(_c => _c === '!' || _c === ' ')) {
+        // negation operator
+        return "negaOp";
+    } else if (['*', "**", '/', "//", '%'].includes(tt)) {
         // arithmetic
         return "arithOp";
+    } else if (['+', '-'].includes(tt)) {
+        // plus/minus signs and positive/negative symbols
+        return "signOp";
     } else if (["&&", "||"].includes(tt)) {
         // logical
         return "logiOp";
+    } else if (["++", "--"].includes(tt)) {
+        // plus/minus signs and positive/negative symbols
+        return "illeOp";
     } else if (tt === '(') {
         return "parenL";
     } else if (tt === ')') {
         return "parenR";
-    } else if (tt.startsWith('$')) {
-        return "var";
-    } else if (["time"].includes(tt)) {
-        return "keyW";
-    } else if (!Number.isNaN(Number(tt))) {
-        return "val";
+    // } else if (tt.startsWith('$')) {
+    //     return "var";
+    // } else if (["time"].includes(tt)) {
+    //     return "keyW";
+    // } else if (!Number.isNaN(Number(tt))) {
+    //     return "val";
     } else {
-        return "unknow";
+        // return "unknow";
+        return "val";
     }
 }
 
@@ -163,7 +177,10 @@ export class GIMIDocumentParser {
     static readonly sectionInvokeRegex = /^([\w.]+(?:\\[\w.]+)*) *(.*)/d;
     static readonly sectionInvokePattern = String.raw`^[\w.]+(?:\\[\w.]+)*`;
 
-    static readonly conditionStructureRegex = /\(|\)|<=|>=|<|>|==|===|!=|!==|&&|\|\||\*{1,2}|\/{1,2}|\%|[+-]?\b\d+(?:\.\d+)?\b|\+|-|\$\w+|\$(?:\\\w+)+|\w+|\S+?/dg;
+    /**for now, `+` and `-` are always separate, must be handled manually possible positive or negative numbers */
+    // static readonly conditionStructureRegex = /\(|\)|<=|>=|<|>|===|==|!==|!=|&&|\|\||\*{1,2}|\/{1,2}|\%|[+-]?\d+(?:\.\d+)?|\+|-|\$\w+|\$(?:\\\w+)+|\w+|\S+?/dg;
+    static readonly conditionStructureRegex = /\(|\)|<=|>=|<|>|===|==|!==|!=|!(?: *!)*|\+\+?|--?|&&|\|\||\*{1,2}|\/{1,2}|\%|\b(([vhdgpc]s-(t|cb)|[pc]s-u|vb)\d{1,3}|ib)\b|[xyzw]\d{0,3}|\d+(?:\.\d+)?|\$\w+|\$(?:\\\w+)+|\w+|\S+?/dg;
+    /** \b *([+-])| *([+-] *\d+(?:\.\d+)?) */
 
     private static regexPatternGroup: string[] = [
         String.raw`"(?:\.|[^"\\])*"`,
@@ -243,8 +260,8 @@ export class GIMIDocumentParser {
      */
     static parseExpression(tokens: ParserToken[], refDiags: RelativeDiagnostic[]): TextTokenComposite {
         // maybe change state types to number enum?
-        type StateT = "var|val|keyW|expr" | "logi|arith|comp" | "logi|arith";
-        const isVarType = ((tkt: ParserTokenType): boolean => tkt === "var" || tkt === "val" || tkt === "keyW" || tkt === "expr");
+        type StateT = "vals" | "sign|vals" | "nega|sign|vals" | "logi|arith|sign|comp" | "logi|arith|sign";
+        const isVarType = ((tkt: ParserTokenType): boolean => tkt === "val" || tkt === "var" || tkt === "keyW" || tkt === "expr");
         if (tokens.length === 0) {
             return new TextTokenComposite([]);
         } else if (tokens.length === 1) {
@@ -271,7 +288,7 @@ export class GIMIDocumentParser {
             }
             return _r;
         })();
-        let expectState: StateT = "var|val|keyW|expr";
+        let expectState: StateT = "nega|sign|vals";
         let hasComparison: boolean = false;
         let lastState: ParserTokenType = "unknow";
         for (let i = stIdx; i < endIdx; i++) {
@@ -279,37 +296,65 @@ export class GIMIDocumentParser {
             const tkt = judgeConditionType(tk);
             let errInfo = "";
             switch (expectState) {
-                case "var|val|keyW|expr":
+                case "nega|sign|vals":
+                    if (!isVarType(tkt) && tkt !== "signOp" && tkt !== "negaOp") {
+                        errInfo = "Must be a variable";
+                    }
+                    if (tkt === "negaOp") {
+                        expectState = "nega|sign|vals";
+                    } else if (tkt === "signOp") {
+                        expectState = "vals";
+                    } else if (hasComparison) { // lest must be vals
+                        expectState = "logi|arith|sign";
+                    } else {
+                        expectState = "logi|arith|sign|comp";
+                    }
+                    break;
+                // case "sign|vals":
+                //     if (!isVarType(tkt) && tkt !== "signOp") {
+                //         errInfo = "Must be a variable";
+                //     }
+                //     if (tkt === "signOp") {
+                //         expectState = "vals";
+                //     } else if (hasComparison) {
+                //         expectState = "logi|arith|sign";
+                //     } else {
+                //         expectState = "logi|arith|sign|comp";
+                //     }
+                //     break;
+                case "vals":
                     if (!isVarType(tkt)) {
                         errInfo = "Must be a variable";
                     }
                     if (hasComparison) {
-                        expectState = "logi|arith";
+                        expectState = "logi|arith|sign";
                     } else {
-                        expectState = "logi|arith|comp";
+                        expectState = "logi|arith|sign|comp";
                     }
                     break;
-                case "logi|arith|comp":
+                case "logi|arith|sign|comp":
                     if (tkt === "logiOp") {
                         hasComparison = false;
-                    } else if (tkt === "arithOp") {
-
                     } else if (tkt === "compOp") {
                         hasComparison = true;
+                    } else if (tkt === "arithOp" || tkt === "signOp") {
+
                     } else {
                         errInfo = "Must be a logical operator";
                     }
-                    expectState = "var|val|keyW|expr";
+                    expectState = "nega|sign|vals";
                     break;
-                case "logi|arith":
+                case "logi|arith|sign":
                     if (tkt === "logiOp") {
                         hasComparison = false;
-                    } else if (tkt === "arithOp") {
+                    } else if (tkt === "arithOp" || tkt === "signOp") {
 
+                    } else if (hasComparison && tkt === "compOp") {
+                        errInfo = "Must be a logical operator, left is already have a comparison operator."
                     } else {
-                        errInfo = "Must be a logical operator or a arithmetic operator";
+                        errInfo = "Must be a logical operator or a arithmetic operator.";
                     }
-                    expectState = "var|val|keyW|expr";
+                    expectState = "nega|sign|vals";
                     break;
                 default:
                     errInfo = "Something in exception case. This should never happend.";
@@ -333,12 +378,16 @@ export class GIMIDocumentParser {
         const diags: RelativeDiagnostic[] = [];
         const stack: ParserToken[][] = [];
         let currentTokens: ParserToken[] = [];
+        if (!GIMIConfiguration.diagnostics.conditionExp) {
+            return [];
+        }
         const tokens = textToken.regexSplit(txt => {
             const matchs = [...txt.matchAll(this.conditionStructureRegex)];
             return matchs.map(_m => {
                 return {regexArr: _m, indexes: [0]};
             })
         });
+        const tttt = 20 + -   1
         if (!tokens) {
             return diags;
         }

@@ -53,20 +53,25 @@
       {
         "title": "GIMI ini",
         "properties": {
+          "GIMIini.diagnostics.conditionExpression": {
+            "type": "boolean",
+            "default": true,
+            "description": "Enable diagnostics on condition expresstion. (Need restart VSCode)"
+          },
           "GIMIini.file.parseingAllowedMaximumLines": {
             "type": "number",
             "default": 1000,
-            "description": "Maximum lines in a single file allowed by the parser. '-1' to allowed infinite lines :)\nTake closer one compared to maximum characters"
+            "description": "[Useless] Maximum lines in a single file allowed by the parser. '-1' to allowed infinite lines :)\nTake closer one compared to maximum characters"
           },
           "GIMIini.file.parseingAllowedMaximumCharacters": {
             "type": "number",
             "default": 30000,
-            "description": "Maximum characters in a single file allowed by the parser. '-1' to allowed infinite characters :)\nTake closer one compared to maximum lines"
+            "description": "[Useless] Maximum characters in a single file allowed by the parser. '-1' to allowed infinite characters :)\nTake closer one compared to maximum lines"
           },
           "GIMIini.parser.parseingDebounceInterval": {
             "type": "number",
             "default": -1,
-            "description": "Debounce. Each parse must be greater than this time interval. Unit is seconds, decimal allowed, any negative number means disabled."
+            "description": "[Useless] Debounce. Each parse must be greater than this time interval. Unit is seconds, decimal allowed, any negative number means disabled."
           }
         }
       }

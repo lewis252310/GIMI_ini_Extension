@@ -31,7 +31,7 @@ export class GIMICompletionItemProvider implements CompletionItemProvider {
 
         } else if (context.triggerCharacter === '[') {
             const line = document.lineAt(position);
-            if (position.character === line.firstNonWhitespaceCharacterIndex) {
+            if (position.character === line.firstNonWhitespaceCharacterIndex + 1) {
                 const items = getCommonSectionSnippets(position);
                 return new CompletionList(items, false);
             }

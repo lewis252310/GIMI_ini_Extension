@@ -142,7 +142,8 @@ No release version until now.
 
 Change:
  - Internal parsing engine completely rebuild.
- Now can processed files with 30,000+ lines, and still quickly.
+ Now can processed files with 30k+ lines, and still quickly.
+ - Scope of single files and projects are properly detached
 
 Added:
  - Better code diagnostics
