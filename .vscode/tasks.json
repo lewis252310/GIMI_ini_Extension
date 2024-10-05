@@ -29,7 +29,7 @@
           "${workspaceFolder}/building_tools/convertYamlJson.py",
           "y2j",
           "--input_file",
-          "${workspaceFolder}/gimi-ini_extension/syntaxes/gimi_ini.tmLanguage_v0.1.7-B.yaml",
+          "${workspaceFolder}/gimi-ini_extension/syntaxes/gimi_ini.tmLanguage.yaml",
           "--output_file",
           "${workspaceFolder}/gimi-ini_extension/syntaxes/gimi_ini.tmLanguage.json"
         ],

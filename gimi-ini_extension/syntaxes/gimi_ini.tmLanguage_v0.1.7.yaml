@@ -1,0 +1,144 @@
+$schema: https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json
+version: 0.1.7
+scopeName: source.gimi-ini
+name: gimi-ini
+patterns:
+  - include: '#shaderregex'
+  - include: '#commandlist'
+  - include: '#regular'
+  - include: '#general'
+  - include: '#general_comments'
+repository:
+# ======SHADERREGEX======
+# Contains any tags for ShaderRegex (Highest Priority)
+  shaderregex:
+    name: meta.shaderregex.gimi-ini
+    patterns:
+    - begin: ^\[(ShaderRegex.*(\.Pattern\.Replace))\]
+      end: (?!\G)(?=^\[.*\])
+      #name: string.regex.shaderregex.pattern.replace.gimi-ini
+      beginCaptures:
+        '1':
+          name: entity.name.function.shaderregex.pattern.replace.gimi-ini
+        '2':
+          name: markup.italic.shaderregex.pattern.replace.gimi-ini
+      patterns:
+        #Needs some work
+        
+        - match: \d[\.\d]*
+          name: constant.character.regexasm.gimi-ini
+        - match: ^.*(//.*)
+          captures:
+            '1':
+              name: string.gimi-ini
+        - include: '#general_comments'
+        # - match: .*
+        #   name: string.regex.gimi-ini
+    - begin: ^\[(ShaderRegex.*(\.Pattern))\]
+      end: (?!\G)^(?=\[.*\])
+      #name: string.regex.shaderregex.pattern.gimi-ini
+      beginCaptures:
+        '1':
+          name: entity.name.function.shaderregex.pattern.gimi-ini
+        '2':
+          name: markup.italic.shaderregex.pattern.gimi-ini
+      patterns:
+      #
+      - include: '#general_comments'
+    - begin: ^\[(ShaderRegex.*(\.InsertDeclarations))\]
+      end: (?!\G)^(?=\[.*\])
+      #name: string.regex.shaderregex.insertdeclarations.gimi-ini
+      beginCaptures:
+        '1':
+          name: entity.name.function.shaderregex.insertdeclarations.gimi-ini
+        '2':
+          name: markup.italic.shaderregex.insertdeclarations.gimi-ini
+      patterns:
+      #
+      - include: '#general_comments'
+    
+# ======COMMANDLIST======
+# Contains any tags exculsive to CommandLists
+  commandlist:
+    name: meta.commandlist.gimi-ini
+    patterns:
+    - match: \[ShaderOverride.*\]
+      name: entity.name.function.shaderoverride.gimi-ini
+    - match: \[TextureOverride.*\]
+      name: entity.name.function.textureoverride.gimi-ini
+    - match: \[CustomShader.*\]
+      name: entity.name.function.customshader.gimi-ini
+    - match: \[CommandList.*\]
+      name: entity.name.function.commandlist.gimi-ini
+    - match: \[BuiltInCustomShader.*\]
+      name: entity.name.function.builtincustomshader.gimi-ini
+    - match: \[BuiltInCommandList.*\]
+      name: entity.name.function.builtincommandlist.gimi-ini
+    - match: \[Present\]
+      name: entity.name.function.present.gimi-ini
+    - match: \[ClearRenderTargetView\]
+      name: entity.name.function.clearrendertargetview.gimi-ini
+    - match: \[ClearDepthStencilView\]
+      name: entity.name.function.cleardepthstencilview.gimi-ini
+    - match: \[ClearUnorderedAccessViewUint\]
+      name: entity.name.function.clearunorderedaccessviewuint.gimi-ini
+    - match: \[ClearUnorderedAccessViewFloat\]
+      name: entity.name.function.clearunorderedaccessviewfloat.gimi-ini
+    - match: \[Constants\]
+      name: entity.name.function.constants.gimi-ini
+    - match: \[ShaderRegex.*\]
+      name: entity.name.function.shaderregex.gimi-ini
+# ========REGULAR========
+# Contains any tags used for D3DX.ini Config
+  regular:
+    name: meta.regular.gimi-ini
+    patterns:
+    - name: support.class.logging.gimi-ini
+      match: \[Logging\]
+    - name: support.class.system.gimi-ini
+      match: \[System\]
+    - name: support.class.device.gimi-ini
+      match: \[Device\]
+    - name: support.class.stereo.gimi-ini
+      match: \[Stereo\]
+    - name: support.class.rendering.gimi-ini
+      match: \[Rendering\]
+    - name: support.class.hunting.gimi-ini
+      match: \[Hunting\]
+    - name: support.class.profile.gimi-ini
+      match: \[Profile\]
+    - name: support.class.convergencemap.gimi-ini
+      match: \[ConvergenceMap\]
+    - name: support.class.resource.gimi-ini
+      match: \[Resource.*\]
+    - name: support.class.key.gimi-ini
+      match: \[Key.*\]
+    - name: support.class.preset.gimi-ini
+      match: \[Preset.*\]
+    - name: support.class.include.gimi-ini
+      match: \[Include.*\]
+    - name: support.class.loader.gimi-ini
+      match: \[Loader\]
+# ========GENERAL========
+# Contains any tags that are global after exceptions
+  general_comments:
+    name: meta.general-comments.gimi-ini
+    patterns:
+      - match: ^\s*;.*
+        name: comment.gimi-ini
+      - match: ^.*;.*
+        name: invalid.illegal.comment.gimi-ini
+  general:
+    name: meta.general.gimi-ini
+    patterns:
+      - match: ^\s*(.*)\s*(\=).*
+        name: string.config.gimi-ini
+        captures:
+          '1':
+            name: keyword.config.gimi-ini
+          '2':
+            name: keyword.operator.gimi-ini
+  regex_asm:
+    name: meta.regex-asm.gimi-ini
+    patterns:
+      

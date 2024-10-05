@@ -1,144 +1,598 @@
 $schema: https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json
-version: 0.1.7
+version: 0.1.7-B
 scopeName: source.gimi-ini
 name: gimi-ini
 patterns:
-  - include: '#shaderregex'
-  - include: '#commandlist'
-  - include: '#regular'
-  - include: '#general'
-  - include: '#general_comments'
+  - include: '#comment'
+  # special
+  - include: '#sectionShaderregex'
+  # commandlist sections
+  - include: '#sectionConstants'
+  - include: '#sectionPresent'
+  - include: '#sectionCommandList'
+  - include: '#sectionTextureOverride'
+  - include: '#sectionShaderOverride'
+  - include: '#sectionCustomShader'
+  - include: '#sectionBuiltincustomshader'
+  - include: '#sectionBuiltincommandlist'
+  - include: '#sectionClearRenderTargetView'
+  - include: '#sectionCleardepthstencilview'
+  - include: '#sectionClearunorderedaccessviewuint'
+  - include: '#sectionClearunorderedaccessviewfloat'
+  # regular sections
+  - include: '#sectionKey'
+  - include: '#sectionResource'
+  - include: '#sectionInclude'
+  - include: '#sectionLogging'
+  - include: '#sectionSystem'
+  - include: '#sectionDevice'
+  - include: '#sectionStereo'
+  - include: '#sectionRendering'
+  - include: '#sectionHunting'
+  - include: '#sectionProfile'
+  - include: '#sectionConvergencemap'
+  - include: '#sectionPreset'
+  - include: '#sectionLoader'
+  # other
+  - include: '#namespace'
 repository:
+
+# ======TEST GROUND======
+
 # ======SHADERREGEX======
-# Contains any tags for ShaderRegex (Highest Priority)
-  shaderregex:
-    name: meta.shaderregex.gimi-ini
-    patterns:
-    - begin: ^\[(ShaderRegex.*(\.Pattern\.Replace))\]
-      end: (?!\G)(?=^\[.*\])
-      #name: string.regex.shaderregex.pattern.replace.gimi-ini
-      beginCaptures:
-        '1':
-          name: entity.name.function.shaderregex.pattern.replace.gimi-ini
-        '2':
-          name: markup.italic.shaderregex.pattern.replace.gimi-ini
-      patterns:
-        #Needs some work
-        
-        - match: \d[\.\d]*
-          name: constant.character.regexasm.gimi-ini
-        - match: ^.*(//.*)
-          captures:
-            '1':
-              name: string.gimi-ini
-        - include: '#general_comments'
-        # - match: .*
-        #   name: string.regex.gimi-ini
-    - begin: ^\[(ShaderRegex.*(\.Pattern))\]
-      end: (?!\G)^(?=\[.*\])
-      #name: string.regex.shaderregex.pattern.gimi-ini
-      beginCaptures:
-        '1':
-          name: entity.name.function.shaderregex.pattern.gimi-ini
-        '2':
-          name: markup.italic.shaderregex.pattern.gimi-ini
-      patterns:
-      #
-      - include: '#general_comments'
-    - begin: ^\[(ShaderRegex.*(\.InsertDeclarations))\]
-      end: (?!\G)^(?=\[.*\])
-      #name: string.regex.shaderregex.insertdeclarations.gimi-ini
-      beginCaptures:
-        '1':
-          name: entity.name.function.shaderregex.insertdeclarations.gimi-ini
-        '2':
-          name: markup.italic.shaderregex.insertdeclarations.gimi-ini
-      patterns:
-      #
-      - include: '#general_comments'
-    
+  sectionShaderregex:
+
 # ======COMMANDLIST======
-# Contains any tags exculsive to CommandLists
-  commandlist:
-    name: meta.commandlist.gimi-ini
+  sectionConstants:
+    name: meta.section.scope.content.gimi-ini
+    begin: (?i)^\s*\[(Constants)\]
+    beginCaptures:
+      '1':
+        name: entity.name.function.constants.gimi-ini
+    end: (?=\[.+\])
     patterns:
-    - match: \[ShaderOverride.*\]
-      name: entity.name.function.shaderoverride.gimi-ini
-    - match: \[TextureOverride.*\]
-      name: entity.name.function.textureoverride.gimi-ini
-    - match: \[CustomShader.*\]
-      name: entity.name.function.customshader.gimi-ini
-    - match: \[CommandList.*\]
-      name: entity.name.function.commandlist.gimi-ini
-    - match: \[BuiltInCustomShader.*\]
-      name: entity.name.function.builtincustomshader.gimi-ini
-    - match: \[BuiltInCommandList.*\]
-      name: entity.name.function.builtincommandlist.gimi-ini
-    - match: \[Present\]
-      name: entity.name.function.present.gimi-ini
-    - match: \[ClearRenderTargetView\]
-      name: entity.name.function.clearrendertargetview.gimi-ini
-    - match: \[ClearDepthStencilView\]
-      name: entity.name.function.cleardepthstencilview.gimi-ini
-    - match: \[ClearUnorderedAccessViewUint\]
-      name: entity.name.function.clearunorderedaccessviewuint.gimi-ini
-    - match: \[ClearUnorderedAccessViewFloat\]
-      name: entity.name.function.clearunorderedaccessviewfloat.gimi-ini
-    - match: \[Constants\]
-      name: entity.name.function.constants.gimi-ini
-    - match: \[ShaderRegex.*\]
-      name: entity.name.function.shaderregex.gimi-ini
+      - include: '#commandListGeneral'
+      - name: storage.modifier.constants.section.gimi-ini
+        match: ^\s*global( +persist)?
+      - name: invalid.illegal.storage.modifier.constants.section.gimi-ini
+        match: ^\s*persist( +global)?
+      # - include: '#unknowKeyword'
+  sectionPresent:
+    name: meta.section.scope.present.gimi-ini
+    begin: (?i)^\s*\[(Present)\]
+    beginCaptures:
+      '1':
+        name: entity.name.function.present.gimi-ini
+    end: (?=\[.+\])
+    patterns:
+      - include: '#commandListGeneral'
+      # - include: '#unknowKeyword'
+  sectionCommandList:
+    name: meta.section.scope.commandlist.gimi-ini
+    begin: (?i)^\s*\[(CommandList.+)\]
+    beginCaptures:
+      '1':
+        name: entity.name.function.commandlist.gimi-ini
+    end: (?=\[.+\])
+    patterns:
+      - include: '#commandListGeneral'
+      - name: keyword.commandlist.section.gimi-ini
+        match: >
+          \b(?i)(
+            allow_duplicate_hash|depth_filter|partner|model|disable_scissor|filter_index
+          )(?= )\b
+      # - include: '#unknowKeyword'
+  sectionTextureOverride:
+    name: meta.section.scope.textureoverride.gimi-ini
+    begin: (?i)^\s*\[(TextureOverride.+)\]
+    beginCaptures:
+      '1':
+        name: entity.name.function.textureoverride.gimi-ini
+    end: (?=\[.+\])
+    patterns:
+      - include: '#commandListGeneral'
+      - name: keyword.textureoverride.section.gimi-ini
+        match: >
+          \b(?i)(
+            stereomode|format|width|height|width_multiply|height_multiply|iteration|filter_index|expand_region_copy|deny_cpu_read
+          )(?= )\b
+      - name: keyword.textureoverride.section.gimi-ini
+        match: \b(?i)override_(byte_stride|vertex_count)(?= )\b
+      - name: keyword.textureoverride.section.gimi-ini
+        match: >
+          \b(?i)(
+            match_(type|usage|bind_flags|
+            cpu_access_flags|misc_flags|
+            byte_width|stride|mips|format|width|height|depth|array|
+            msaa|msaa_quality|
+            first_vertex|first_index|first_instance|
+            vertex_count|index_count|
+            instance_count|priority)
+          )(?= )\b
+      # - include: '#unknowKeyword'
+  sectionShaderOverride:
+    name: meta.section.scope.shaderoverride.gimi-ini
+    begin: (?i)^\s*\[(ShaderOverride.+)\]
+    beginCaptures:
+      '1':
+        name: entity.name.function.shaderoverride.gimi-ini
+    end: (?=\[.+\])
+    patterns:
+      - include: '#commandListGeneral'
+      - name: keyword.shaderoverride.section.gimi-ini
+        match: >
+          \b(?i)(
+            allow_duplicate_hash|depth_filter|partner|model|disable_scissor|filter_index
+          )(?= )\b
+      # - include: '#unknowKeyword'
+    name: meta.section.scope.shaderregex.gimi-ini
+    begin: (?i)^\s*\[(Shaderregex.+)\]
+    beginCaptures:
+      '1':
+        name: entity.name.function.shaderregex.gimi-ini
+    end: (?=\[.+\])
+    patterns:
+      - include: '#commandListGeneral'
+      # - include: '#unknowKeyword'
+  sectionCustomShader:
+    name: meta.section.scope.customshader.gimi-ini
+    begin: (?i)^\s*\[(CustomShader.+)\]
+    beginCaptures:
+      '1':
+        name: entity.name.function.customshader.gimi-ini
+    end: (?=\[.+\])
+    patterns:
+      - include: '#commandListGeneral'
+      - name: keyword.customshader.section.gimi-ini
+        match: (?i)max_executions_per_frame|flags
+      - name: keyword.customshader.section.gimi-ini
+        match: (?i)blend(_factor|_state_merge|)|alpha(_to_coverage|)|mask
+      - name: keyword.customshader.section.gimi-ini
+        match: (?i)sample_mask
+      - name: keyword.customshader.section.gimi-ini
+        match: (?i)depth(_enable|_write_mask|_func|_stencil_state_merge|_clip_enable|_bias|_bias_clamp)
+      - name: keyword.customshader.section.gimi-ini
+        match: (?i)stencil(_enable|_read_mask|_write_mask|_front|stencil_back|stencil_ref)
+      - name: keyword.customshader.section.gimi-ini
+        match: (?i)fill|cull|front
+      - name: keyword.customshader.section.gimi-ini
+        match: (?i)slope_scaled_depth_bias|depth|scissor_enable
+      - name: keyword.customshader.section.gimi-ini
+        match: (?i)multisample_enable|antialiased_line_enable
+      - name: keyword.customshader.section.gimi-ini
+        match: (?i)rasterizer_state_merge
+      - name: keyword.customshader.section.gimi-ini
+        match: (?i)topology
+      - name: keyword.customshader.section.gimi-ini
+        match: (?i)sampler
+      - name: keyword.customshader.section.blendfactor.gimi-ini
+        match: (?i)src_alpha_sat|zero|one|(inv_|)(src(1?)|dest)(_color|_alpha)
+      # - include: '#unknowKeyword'
+  sectionBuiltincustomshader:
+    name: meta.section.scope.builtincustomshader.gimi-ini
+    begin: (?i)^\s*\[(Builtincustomshader.+)\]
+    beginCaptures:
+      '1':
+        name: entity.name.function.builtincustomshader.gimi-ini
+    end: (?=\[.+\])
+    patterns:
+      - include: '#commandListGeneral'
+      # - include: '#unknowKeyword'
+  sectionBuiltincommandlist:
+    name: meta.section.scope.builtincommandlist.gimi-ini
+    begin: (?i)^\s*\[(Builtincommandlist.+)\]
+    beginCaptures:
+      '1':
+        name: entity.name.function.builtincommandlist.gimi-ini
+    end: (?=\[.+\])
+    patterns:
+      - include: '#commandListGeneral'
+      # - include: '#unknowKeyword'
+  sectionClearRenderTargetView:
+    name: meta.section.scope.clearrendertargetview.gimi-ini
+    begin: (?i)^\s*\[(ClearRenderTargetView)\]
+    beginCaptures:
+      '1':
+        name: entity.name.function.clearrendertargetview.gimi-ini
+    end: (?=\[.+\])
+    patterns:
+      - include: '#commandListGeneral'
+      # - include: '#unknowKeyword'
+  sectionCleardepthstencilview:
+    name: meta.section.scope.cleardepthstencilview.gimi-ini
+    begin: (?i)^\s*\[(Cleardepthstencilview)\]
+    beginCaptures:
+      '1':
+        name: entity.name.function.cleardepthstencilview.gimi-ini
+    end: (?=\[.+\])
+    patterns:
+      - include: '#commandListGeneral'
+      # - include: '#unknowKeyword'
+  sectionClearunorderedaccessviewuint:
+    name: meta.section.scope.clearunorderedaccessviewuint.gimi-ini
+    begin: (?i)^\s*\[(Clearunorderedaccessviewuint)\]
+    beginCaptures:
+      '1':
+        name: entity.name.function.clearunorderedaccessviewuint.gimi-ini
+    end: (?=\[.+\])
+    patterns:
+      - include: '#commandListGeneral'
+      # - include: '#unknowKeyword'
+  sectionClearunorderedaccessviewfloat:
+    name: meta.section.scope.clearunorderedaccessviewfloat.gimi-ini
+    begin: (?i)^\s*\[(Clearunorderedaccessviewfloat)\]
+    beginCaptures:
+      '1':
+        name: entity.name.function.clearunorderedaccessviewfloat.gimi-ini
+    end: (?=\[.+\])
+    patterns:
+      - include: '#commandListGeneral'
+      # - include: '#unknowKeyword'
+
 # ========REGULAR========
-# Contains any tags used for D3DX.ini Config
-  regular:
-    name: meta.regular.gimi-ini
+  sectionKey:
+    name: meta.section.scope.key.gimi-ini
+    begin: (?i)^\s*\[(Key.+)\]
+    beginCaptures:
+      '1':
+        name: support.class.key.gimi-ini
+    end: (?=\[.+\])
     patterns:
-    - name: support.class.logging.gimi-ini
-      match: \[Logging\]
-    - name: support.class.system.gimi-ini
-      match: \[System\]
-    - name: support.class.device.gimi-ini
-      match: \[Device\]
-    - name: support.class.stereo.gimi-ini
-      match: \[Stereo\]
-    - name: support.class.rendering.gimi-ini
-      match: \[Rendering\]
-    - name: support.class.hunting.gimi-ini
-      match: \[Hunting\]
-    - name: support.class.profile.gimi-ini
-      match: \[Profile\]
-    - name: support.class.convergencemap.gimi-ini
-      match: \[ConvergenceMap\]
-    - name: support.class.resource.gimi-ini
-      match: \[Resource.*\]
-    - name: support.class.key.gimi-ini
-      match: \[Key.*\]
-    - name: support.class.preset.gimi-ini
-      match: \[Preset.*\]
-    - name: support.class.include.gimi-ini
-      match: \[Include.*\]
-    - name: support.class.loader.gimi-ini
-      match: \[Loader\]
-# ========GENERAL========
-# Contains any tags that are global after exceptions
-  general_comments:
-    name: meta.general-comments.gimi-ini
-    patterns:
-      - match: ^\s*;.*
-        name: comment.gimi-ini
-      - match: ^.*;.*
-        name: invalid.illegal.comment.gimi-ini
-  general:
-    name: meta.general.gimi-ini
-    patterns:
-      - match: ^\s*(.*)\s*(\=).*
-        name: string.config.gimi-ini
+      - match: '(?i)^\s*(key)(?: *= *(.*))?'
         captures:
           '1':
-            name: keyword.config.gimi-ini
+            name: keyword.other.key.section.key.gimi-ini
           '2':
-            name: keyword.operator.gimi-ini
-  regex_asm:
-    name: meta.regex-asm.gimi-ini
+            patterns:
+              - name: keyword.other.key.section.key.keys.gimi-ini
+                match: (?i)(\b(no_)?(ctrl|shift|alt)\b)|\b\w\b|[\[\];'"]
+              - name: invalid.illegal.anything.gimi-ini
+                match: \S+
+      - include: '#regularGeneral'
+      - match: '(?i)^\s*(type)(?: *= *(.*))?'
+        captures:
+          '1':
+            name: keyword.other.key.section.type.gimi-ini
+          '2':
+            patterns:
+              - name: keyword.other.key.section.type.types.gimi-ini
+                match: (?i)\b(cycle|hold|toggle)\b
+              # - name: invalid.illegal.anything.gimi-ini
+              #   match: \S+
+      - match: '(?i)^\s*(condition)(?: *= *(.*))?'
+        captures:
+          '1':
+            name: keyword.other.key.section.condition.gimi-ini
+          '2':
+            patterns:
+              - include: '#variable'
+              - include: '#constant'
+      - match: '(?i)^\s*(warp)(?: *= *(.*))?'
+        captures:
+          '1':
+            name: keyword.other.key.section.warp.gimi-ini
+          '2':
+            patterns:
+              - name: constant.language.boolean.gimi-ini
+                match: (?i)true|false
+      - match: '(?i)^\s*(delay)(?: *= *(.*))?'
+        captures:
+          '1':
+            name: keyword.other.key.section.delay.gimi-ini
+          '2':
+            patterns:
+            - name: constant.numeric.gimi-ini
+              match: \d+
+            - name: invalid.illegal.otherthing.gimi-ini
+              match: \S+
+      - match: (?i)^\s*(convergence|separation|release_(delay|transition(_type)?)|transition(_type)?)\b( *= *(.*))?
+        captures:
+          '1': keyword.other.key.section.incomplete.gimi-ini
+      - match: '(?i)^\s*(\w+)(?: *= *(.*))?'
+        captures:
+          '1':
+            name: invalid.illegal.otherthing.gimi-ini
+      # - include: '#unknowKeyword'
+  sectionResource:
+    name: meta.section.scope.resource.gimi-ini
+    begin: (?i)^\[(Resource.+)\]
+    beginCaptures:
+      '1':
+        name: support.class.resource.gimi-ini
+    end: (?=\[.+\])
     patterns:
-      
+      - include: '#regularGeneral'
+      - match: '(?i)^\s*(type)(?: *= *(.*))?'
+        captures:
+          '1':
+            name: keyword.other.resource.section.type.gimi-ini
+          '2':
+            patterns:
+              - name: keyword.other.resource.section.type.types.gimi-ini
+                match: >
+                  (?i)(
+                    Buffer|StructuredBuffer|ByteAddressBuffer|Texture([123]D|Cube)|
+                    (Append|Consume)StructuredBuffer|
+                    RW(Buffer|StructuredBuffer|ByteAddressBuffer|Texture[123]D)
+                  )\b
+      - match: '(?i)^\s*(format)(?: *= *(.*))?'
+        captures:
+          '1':
+            name: keyword.other.resource.section.formt.gimi-ini
+          '2':
+            patterns:
+              - name: keyword.other.resource.section.formt.types.gimi-ini
+                match: \bDXGI_FORMAT_(.+)\b
+      - match: '(?i)^\s*(filename)(?: *= *(.*))?'
+        captures:
+          '1':
+            name: keyword.other.resource.section.filename.gimi-ini
+          '2':
+            patterns:
+              - name: markup.underline.link.files.gimi-ini
+                match: (?i)(\.\\)?[\w\-\.]+(\\[\w\-\.]+)*\.[\w\-\.]+\b
+                # this one have some problem
+                # match: (?i)(\.(\\[\w\.\-\#]+)*)?\w+\.\w+
+      - name: keyword.resource.section.gimi-ini
+        match: (?i)\b(filename|stride|data|array)\b
+      # - include: '#unknowKeyword'
+  sectionInclude:
+    name: meta.section.scope.include.gimi-ini
+    begin: (?i)^\[(Include.+)\]
+    beginCaptures:
+      '1':
+        name: support.class.include.gimi-ini
+    end: (?=\[.+\])
+    patterns:
+      - include: '#regularGeneral'
+      - match: '(?i)^\s*(include)(?: *= *(.*))?'
+        captures:
+          '1':
+            name: keyword.other.include.section.include.gimi-ini
+          '2':
+            patterns:
+              - name: markup.underline.link.ini.files.gimi-ini
+                match: (?i)\w+(\\\w+)?\.ini
+      # - include: '#unknowKeyword'
+  sectionLogging:
+    name: meta.section.scope.logging.gimi-ini
+    begin: (?i)^\[(Logging)\]
+    beginCaptures:
+      '1':
+        name: support.class.logging.gimi-ini
+    end: (?=\[.+\])
+    patterns:
+      - include: '#regularGeneral'
+      # - include: '#unknowKeyword'
+  sectionSystem:
+    name: meta.section.scope.system.gimi-ini
+    begin: (?i)^\[(System)\]
+    beginCaptures:
+      '1':
+        name: support.class.system.gimi-ini
+    end: (?=\[.+\])
+    patterns:
+      - include: '#regularGeneral'
+      # - include: '#unknowKeyword'
+  sectionDevice:
+    name: meta.section.scope.device.gimi-ini
+    begin: (?i)^\[(Device)\]
+    beginCaptures:
+      '1':
+        name: support.class.device.gimi-ini
+    end: (?=\[.+\])
+    patterns:
+      - include: '#regularGeneral'
+      # - include: '#unknowKeyword'
+  sectionStereo:
+    name: meta.section.scope.stereo.gimi-ini
+    begin: (?i)^\[(Stereo)\]
+    beginCaptures:
+      '1':
+        name: support.class.stereo.gimi-ini
+    end: (?=\[.+\])
+    patterns:
+      - include: '#regularGeneral'
+      # - include: '#unknowKeyword'
+  sectionRendering:
+    name: meta.section.scope.rendering.gimi-ini
+    begin: (?i)^\[(Rendering)\]
+    beginCaptures:
+      '1':
+        name: support.class.rendering.gimi-ini
+    end: (?=\[.+\])
+    patterns:
+      - include: '#regularGeneral'
+      # - include: '#unknowKeyword'
+  sectionHunting:
+    name: meta.section.scope.hunting.gimi-ini
+    begin: (?i)^\[(Hunting)\]
+    beginCaptures:
+      '1':
+        name: support.class.hunting.gimi-ini
+    end: (?=\[.+\])
+    patterns:
+      - include: '#regularGeneral'
+      # - include: '#unknowKeyword'
+  sectionProfile:
+    name: meta.section.scope.profile.gimi-ini
+    begin: (?i)^\[(Profile)\]
+    beginCaptures:
+      '1':
+        name: support.class.profile.gimi-ini
+    end: (?=\[.+\])
+    patterns:
+      - include: '#regularGeneral'
+      # - include: '#unknowKeyword'
+  sectionConvergencemap:
+    name: meta.section.scope.convergencemap.gimi-ini
+    begin: (?i)^\[(Convergencemap)\]
+    beginCaptures:
+      '1':
+        name: support.class.convergencemap.gimi-ini
+    end: (?=\[.+\])
+    patterns:
+      - include: '#regularGeneral'
+      # - include: '#unknowKeyword'
+  sectionPreset:
+    name: meta.section.scope.preset.gimi-ini
+    begin: (?i)^\[(Preset)\]
+    beginCaptures:
+      '1':
+        name: support.class.preset.gimi-ini
+    end: (?=\[.+\])
+    patterns:
+      - include: '#regularGeneral'
+      # - include: '#unknowKeyword'
+  sectionLoader:
+    name: meta.section.scope.loader.gimi-ini
+    begin: (?i)^\[(Loader)\]
+    beginCaptures:
+      '1':
+        name: support.class.loader.gimi-ini
+    end: (?=\[.+\])
+    patterns:
+      - include: '#regularGeneral'
+      # - include: '#unknowKeyword'
+
+# ========general========
+  namespace:
+    name: entity.namespace.gimi-ini
+    begin: ^(?=namespace)
+    end: $|\n
+    patterns:
+      - name: keyword.namespace.gimi-ini
+        match: namespace
+      - name: constant.namespace.path.gimi-ini
+        match: \w+(?:\\\w+)+
+  commandListGeneral:
+    patterns:
+      - include: '#comment'
+      - name: meta.control.flow.scope.gimi-ini
+        patterns:
+          - begin: (?i)^\s*(if|else(?:\s*if)?|elif)\b
+            end: $|\n
+            beginCaptures:
+              '1':
+                name: keyword.control.have.condition.gimi-ini
+            patterns:
+              - include: '#variable'
+              - include: '#keywords'
+          - begin: (?i)^\s*(else|endif)\b
+            end: $|\n
+            beginCaptures:
+              '1':
+                name: keyword.control.no.condition.gimi-ini
+        # applyEndPatternLast: 0
+        # _command: See https://github.com/martinring/tmlanguage/issues/1
+      - match: '(?i)^\s*(handling)(?: *= *(.*))?'
+        captures:
+          '1':
+            name: keyword.other.commandlist.general.handling.gimi-ini
+          '2':
+            patterns:
+              - name: keyword.other.commandlist.general.handling.type.gimi-ini
+                match: (?i)skip
+      - match: '(?i)^\s*(hash)(?: *= *(.*))?'
+        captures:
+          '1':
+            name: keyword.other.commandlist.general.hash.gimi-ini
+          '2':
+            patterns:
+              - name: support.type.hash.gimi-ini
+                match: (?i)\b[\dabcdef]{8,16}\b
+      - match: '(?i)^\s*((?:[vhdgpc]s-(?:t|cb)|vb)\d{1,3}|ib) *= *(.*)?'
+        captures:
+          '1':
+            name: variable.language.gimi-ini
+          '2':
+            patterns:
+              - name: support.class.variable.target.gimi-ini
+                match: (?i)\bResource.+\b
+      - include: '#variable'
+      - include: '#constant'
+      - include: '#keywords'
+      # - name: keyword.control.gimi-ini
+      #   match: \b(?i)if|else( ?if)?|elif|endif\b
+      - name: keyword.operator.execution.flow.gimi-ini
+        match: (?i)\b(post|pre)\b
+      - name: keyword.other.variable.type.gimi-ini
+        match: (?i)\blocal\b
+
+  regularGeneral:
+    patterns:
+      - include: '#comment'
+      - include: '#variable'
+      - include: '#constant'
+      - include: '#keywords'
+
+  keywords:
+    patterns:
+      - name: keyword.analyse.options.gimi-ini
+        match: (?i)\banalyse_options\b
+      - match: '(?i)^\s*(run)(?: *= *(.*))?'
+        captures:
+          '1':
+            name: keyword.operator.variable.flow.run.gimi-ini
+          '2':
+            patterns:
+              - name: support.function.run.gimi-ini
+                match: (?i)\b(CommandList|CustomShader)[\\\w]*\b
+      - name: keyword.operator.variable.operator.gimi-ini
+        match: (?i)\b(ref(erence)?|copy|store|draw(indexed)?)\b
+      # - name: keyword.operator.gimi-ini
+      #   match: (<|>|<=|>=|==|===|!=|!==|&&|\|\|)
+      # - name: keyword.operator.gimi-ini
+      #   match: ([\+\-]|\*{1,2}|\/{1,2}|\%{1}|!{1})
+      # - name: keyword.operator.gimi-ini
+      #   match: (=)
+  variable:
+    patterns:
+      - name: variable.name.gimi-ini
+        match: (?i)\$[a-z_\\][\w\\]*\b
+      - name: variable.language.gimi-ini
+        match: (?i)\b(([vhdgpc]s-(t|cb)|[pc]s-u|vb)\d{1,3}|ib)\b
+      - name: variable.other.gimi-ini
+        match: (?i)\b[vhdgpc]s(?!-)\b
+      - name: variable.parameter.gimi-ini
+        match: (?i)\b[xyzw]\d{0,3}\b
+      - name: variable.dump.type.gimi-ini
+        match: (?i)\bdump_(rt|tex|cb|vb|ib)|buf|txt\b
+      - name: constant.numeric.gimi-ini
+        match: (?i)time|hunting|null|inf|NaN|this
+      # - name: support.function.run.gimi-ini
+      #   match: (?i)\b(CommandList|CustomShader)[\\\w]*\b
+      # - name: support.type.hash.gimi-ini
+      #   match: (?i)\b[\dabcdef]{8,16}\b
+  constant:
+    patterns:
+      - name: constant.numeric.gimi-ini
+        match: (?i)rt_width|rt_height|res_width|res_height|window_width|window_height|cursor_screen_x|cursor_screen_y|cursor_window_x|cursor_window_y|cursor_x|cursor_y
+      - name: constant.numeric.gimi-ini
+        match: (?i)vertex_count|index_count|instance_count|first_vertex|first_index|first_instance|thread_group_count_x|thread_group_count_y|thread_group_count_z|indirect_offset|draw_type      
+  strings:
+    name: string.quoted.double.gimi-ini
+    begin: '"'
+    end: '"'
+    patterns:
+      - name: constant.character.escape.gimi-ini
+        match: \\.
+      - name: string.easter.eggs.gimi-ini
+        match: Seriously\? Why you have typing the full \.ini by hand\?
+  unknowKeyword:
+    name: invalid.illegal.unknow.keyword.gimi-ini
+    match: \S+
+  comment:
+    patterns:
+      - name: comment.line.semicolon.gimi-ini
+        match: ^\s*(;)(.*)$
+        captures:
+          '1':
+            name: punctuation.definition.comment.gimi-ini
+          '2':
+            name: comment.line.semicolon.content.gimi-ini
+            patterns:
+              - name: comment.easter-eggs.gimi-ini
+                match: \bbug(s)?|issue(s)?|good luck\b
+      - name: invalid.illegal.comment.gimi-ini
+        match: ^.+;.*$

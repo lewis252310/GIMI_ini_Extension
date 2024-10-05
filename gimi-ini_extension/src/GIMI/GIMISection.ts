@@ -257,7 +257,7 @@ export class GIMISection extends ChainStructureBase {
         return undefined;
     }
 
-    /**maybe change to use custom parsing instead? */
+    /**will not trim() self */
     static isHeaderStr(str: string): boolean {
         if (str.startsWith("[") && str.length > 2) {
             if (str.endsWith("]")) {
@@ -267,8 +267,6 @@ export class GIMISection extends ChainStructureBase {
             }
         }
         return false;
-        // return str.startsWith('[') && str.length > 1;
-        // return str.startsWith('[') && str.endsWith(']') && str.length > 2;
     }
 
     /**
@@ -334,7 +332,7 @@ export class GIMISection extends ChainStructureBase {
         })();
         if (_stP.line === _edP.line) {
             const lineText = document.lineAt(_stP).text.trim()
-            if (GIMISection.isHeaderStr(lineText)) {
+            if (this.isHeaderStr(lineText)) {
                 return {state: "on", lineText: lineText, position: _stP};
             }
         }
@@ -438,33 +436,34 @@ export class GIMISection extends ChainStructureBase {
 
 function analyzeSectionTitle(line: TextLine): RelativeDiagnostic[] {
     const rawText = line.text;
-    if (!GIMISection.isHeaderStr(rawText)) {
+    if (!GIMISection.isHeaderStr(rawText.trimStart())) {
+        console.log("throw Error(analyzeSectionTitle ERROR!)")
         throw Error("analyzeSectionTitle ERROR! input is not a legal section title.");
     }
     const _r: RelativeDiagnostic[] = [];
     const lineRelSt = line.range.start.with(0);
     const lineRelEd = line.range.end.with(0);
     const lineRelRng = new Range(lineRelSt, lineRelEd);
-    const [u1, u2, u3, ...ux] = [...rawText.matchAll(/(\[|\]|[^\[\]\r\n\t]+)/g)];
-    if (!u2) {
-        _r.push({
-            relRng: lineRelRng, lv: DiagnosticSeverity.Error,
-            info: "This is an internal exception. !!! Shouldn't happen !!!"
-        });
-    } else {
-        // const u2StPos = lineRelSt.translate(0, u2.index);
-        for (const _m of u2[0].matchAll(/[ \$\[\]]/g)) {
-            // const mStPos = u2StPos.translate(0, u2.index + _m.index);
-            const mStPos = lineRelSt.translate(0, u2.index + _m.index);
-            _r.push({
-                relRng: new Range(mStPos, mStPos.translate(0, _m[0].length)),
-                info: `Use '${_m[0]}' in title can cause problems.`, lv: DiagnosticSeverity.Warning
-            });                        
-        }
+    const match = rawText.match(/\s*\[(.+)\] *(.*)/d);
+    if (!match) {
+        _r.push({ relRng: lineRelRng, lv: DiagnosticSeverity.Error,
+            info: "Nothing matched! This is an internal exception. !!! Shouldn't happen !!!" });
+        return _r;
     }
-    if (ux.length !== 0) {
+    const [raw, name, extra] = (() => {
+        return match.map((_m, i) => {
+            return {txt: _m, idx: match.indices![i][0]}
+        })
+    })();
+    for (const _u of name.txt.matchAll(/[^\w.]/dg)) {
+        const stPos = lineRelSt.translate(0, name.idx + _u.indices![0][0]);
+        _r.push({ relRng: new Range(stPos, stPos.translate(0, _u[0].length)),
+            info: `Use '${_u[0]}' in title can cause problems.`, lv: DiagnosticSeverity.Warning
+        });
+    }
+    if (extra.txt.length !== 0) {
         _r.push({
-            relRng: new Range(lineRelSt.translate(0, (u3.index + u3[0].length - 1)), lineRelEd),
+            relRng: new Range(lineRelSt.translate(0, (extra.idx)), lineRelEd),
             info: "No annotations are allowed after the section title.", lv: DiagnosticSeverity.Error
         });
     }

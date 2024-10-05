@@ -1,8 +1,8 @@
-## For modder and normal user
+### For modder and normal user
 
 Just keep reading.
 
-## For developer
+### For developer
 
 Please read other README at deeper folders.
 
@@ -109,7 +109,7 @@ A comment separation type, just like Markdown's horizontal line.
 
 ## Extension Settings
 
-Noop.
+Condition diagnostics enable/disable.
 
 <!-- Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
 
@@ -126,7 +126,7 @@ This extension contributes the following settings:
 
 The following types of editing can starting make features get error.
 
- - Any editing when range is contain section title
+ - Any editing when range is contain or on section title line
  - Quick copy lines (Both up and down).
  - Move line (Both up and down)
 
@@ -134,49 +134,13 @@ The following types of editing can starting make features get error.
 
 It is very simple. Just restart VScode.
 
-## Release Notes
-
-No release version until now.
-
-### 0.4.0
-
-Change:
- - Internal parsing engine completely rebuild.
- Now can processed files with 30k+ lines, and still quickly.
- - Scope of single files and projects are properly detached
-
-Added:
- - Better code diagnostics
-   - key-value pair.
-   - Namespace check.
-   - Condition expression.
- - Better highlight colors.
-
-Fixed:
- - When `key` keyword at Key section have `;` get wrong highlight
- - 
-
-### 0.2.1
-Added:
- - Variable auto completion
- - Variable and section definition jump
- - Diagnostic for illegal comment
-
-### 0.1.0
-
-Very huge changes. They have tow types.
- 1. Feasibility testing in progress:
-   - Keyword range checking.
-   - Keyword meaning hover tips.
- 2. Already working:
-   - The rules of tmLanguage has been change,
-     including but not limited to nesting, area checking, possible range guessing.
+## Note
 
 I need some color style suggestions, and tmLanguage token namespace regularization...
 
-### 0.0.1
+## Released
 
-Initial builded of ...
+See [CHANGELOG](./CHANGELOG.md)
 
 ---
 

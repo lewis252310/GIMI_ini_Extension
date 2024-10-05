@@ -20,7 +20,7 @@
     "type": "git",
     "url": "https://github.com/lewis252310/GIMI_ini_Extension.git"
   },
-  "version": "0.4.0",
+  "version": "0.4.1",
   "engines": {
     "vscode": "^1.81.0"
   },
