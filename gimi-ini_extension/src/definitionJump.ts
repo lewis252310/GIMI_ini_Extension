@@ -30,7 +30,7 @@ export class GIMIDefinitionProvider implements DefinitionProvider{
         if (wordRange) {
             const word = document.getText(wordRange);
             // console.log("get word", word);
-            const vari = file.findGlobalVariable(encodeToGIMIString(word.slice(1)));
+            const vari = file.findGlobalVariable(word.slice(1));
             if (!vari) {
                 return;
             }
@@ -50,7 +50,7 @@ export class GIMIDefinitionProvider implements DefinitionProvider{
             const name = parts.splice(-1, 1)[0];
             const path = parts.join("\\");
             const targetFile = file.rootProject.findFileFromNamespace(encodeToGIMIString(path));
-            const targetVar = targetFile?.findGlobalVariable(encodeToGIMIString(name));
+            const targetVar = targetFile?.findGlobalVariable(name);
             if (!targetVar) {
                 return;
             }

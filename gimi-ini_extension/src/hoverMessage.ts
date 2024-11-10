@@ -27,20 +27,38 @@ export class GIMIHoverProvider implements HoverProvider{
         if (wordRange) {
             const word = document.getText(wordRange);
             // console.log("get word", word);
-            const vari = file.findGlobalVariable(encodeToGIMIString(word.slice(1)));
+            const vari = file.findGlobalVariable(word.slice(1));
             if (!vari) {
 				return new Hover(`The variable '${word}' is not exist.`, wordRange);
             }
+			// const lowWord = word.toLowerCase();
+			// switch (lowWord) {
+			// 	case "$active":
+			// 		return new Hover(`'${word}' 通常是用來辨認所屬角色是否繪製於螢幕上.`, wordRange);					
+			// 	case "$swapvar":
+			// 		return new Hover(`'${word}' 通常是用來表示當前切換到的變體序數.`, wordRange);					
+			// 	default:
+			// 		break;
+			// }
         }
 
 		wordRange = document.getWordRangeAtPosition(position, /\b[\w.]+\b/);
 		if (wordRange) {
-			const secTitle = document.getText(wordRange)
-			const secInfo = parseSectionTypeInfo(secTitle);
+			const word = document.getText(wordRange)
+
+			// if (word.toLowerCase() === "key") {
+			// 	if (document.lineAt(position).firstNonWhitespaceCharacterIndex === wordRange.start.character) {
+			// 		return new Hover("設定用於觸發的按鍵", wordRange);
+			// 	} else {
+			// 		return new Hover("這個關鍵字或這個單詞可能並不應該在這裡", wordRange);
+			// 	}
+			// }
+
+			const secInfo = parseSectionTypeInfo(word);
 			if (!secInfo.legal) {
 				return;
 			}
-			const section = file.findSection(encodeToGIMIString(secTitle));
+			const section = file.findSection(encodeToGIMIString(word));
 			if (!section) {
 				return;
 			}

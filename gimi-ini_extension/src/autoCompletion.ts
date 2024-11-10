@@ -9,17 +9,12 @@ export class GIMICompletionItemProvider implements CompletionItemProvider {
         if (!file) {
             return;
         }
-        const laftCahr = (() => {
-            if (position.character < 2) {
-                return undefined;
-            }
-            return document.getText(new Range(position.translate(0, -2), position.translate(0, -1)));
-        })()
-        if (context.triggerCharacter === '$' || (context.triggerKind === 0 && laftCahr === '$')) {
+        const laftCahr = position.character < 2 ? undefined : document.getText(new Range(position.translate(0, -2), position.translate(0, -1)));;
+        if (context.triggerCharacter === '$' || (context.triggerKind === CompletionTriggerKind.Invoke && laftCahr === '$')) {
             // const range = new Range(position.translate(0, -1), position);
             const items: CompletionItem[] = [];
             file.globalVariables.forEach(gVar => {
-                items.push(new CompletionItem(gVar.name, CompletionItemKind.Variable));
+                items.push(new CompletionItem(gVar.rawName, CompletionItemKind.Variable));
             })
             return new CompletionList(items, false);
         } else if (context.triggerCharacter === '\\' && laftCahr === '$') {
@@ -35,7 +30,7 @@ export class GIMICompletionItemProvider implements CompletionItemProvider {
                 const items = getCommonSectionSnippets(position);
                 return new CompletionList(items, false);
             }
-        } else if (context.triggerKind === 0 && position.character > 0) {
+        } else if (context.triggerKind === CompletionTriggerKind.Invoke && position.character > 0) {
             const laftPart = document.getText(new Range(position.with({character: 0}), position)).trim();
             if (laftPart.startsWith("r") && /^run *= */.test(laftPart)) {
                 const items: CompletionItem[] = [];

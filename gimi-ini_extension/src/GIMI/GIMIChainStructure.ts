@@ -1,12 +1,8 @@
-import {  } from "./GIMI";
-import { getSectionConfig, isPrefixSection } from "./GIMISectionTitle";
-import { GIMISection } from "./GIMISection";
 import { GIMIString } from "./GIMIString";
-
 
 export abstract class ChainStructureBase {
     /**用於給 chain structure 標記 id 的成員 **不要他用也不要誤用** */
-    identifier: GIMIString = "" as GIMIString;
+    chainId: GIMIString = "" as GIMIString;
     // constructor() {}
     abstract getIdentifierKeyPart(): GIMIString;
 }
@@ -52,8 +48,8 @@ export class GIMIChainStructure<U extends ChainStructureBase> {
         return this.chainHead === undefined || this.chainTail === undefined;
     }
 
-    private parseNodeId(identifier: GIMIString): {key: GIMIString, index: number | undefined} {
-        const parts = identifier.split("##");
+    private parseNodeId(id: GIMIString): {key: GIMIString, index: number | undefined} {
+        const parts = id.split("##");
         const key = parts[0] as GIMIString;
         const idx = Number(parts[1]);
         const index = Number.isNaN(idx) ? undefined : idx;
@@ -151,8 +147,12 @@ export class GIMIChainStructure<U extends ChainStructureBase> {
         return this.get("TAIL");
     }
 
-    isNotEmpty(): this is this & {head: U, tail: U} {
+    hasContent(): this is this & {head: U, tail: U} {
         return !this.ownIsEmpty();
+    }
+
+    isEmpty(): this is this & {head: undefined, tail: undefined} {
+        return this.ownIsEmpty();
     }
 
     get(id: ChainIdentifier): U | undefined {
@@ -160,6 +160,21 @@ export class GIMIChainStructure<U extends ChainStructureBase> {
             return undefined;
         }
         return this.getNodeRelation(id)?.node.data;
+    }
+
+    getRelation(id: ChainIdentifier): {prev?: U, current: U, next?: U} | undefined {
+        if (this.ownIsEmpty()) {
+            return undefined;
+        }
+        const currentNode = this.getNodeRelation(id)?.node;
+        if (!currentNode) {
+            return undefined
+        }
+        return {
+            current: currentNode.data,
+            prev: this.getNodeRelation(currentNode.prev)?.node.data,
+            next: this.getNodeRelation(currentNode.next)?.node.data
+        }
     }
 
     /**
@@ -233,7 +248,7 @@ export class GIMIChainStructure<U extends ChainStructureBase> {
                     cutInfo.startPrev = this.getNodeRelation(node.prev)?.node;
                 }
                 if ((typeof cutEndCondition === "number" && index === cutEndCondition - 1) ||
-                    (typeof cutEndCondition === "string" && node.data.identifier === cutEndCondition)) {
+                    (typeof cutEndCondition === "string" && node.data.chainId === cutEndCondition)) {
                     cutInfo.endNext = this.getNodeRelation(node.next)?.node;
                     return false;
                 }
@@ -248,11 +263,11 @@ export class GIMIChainStructure<U extends ChainStructureBase> {
                 } else {
                     for (let i = indexes.at(-1)!; i < value.array.length; i++) {
                         const _node = value.array[i];
-                        _node.data.identifier = this.generateNodeId(key, i);
+                        _node.data.chainId = this.generateNodeId(key, i);
                         const _prev = this.getNodeRelation(_node.prev)?.node;
-                        _prev && (_prev.next = _node.data.identifier)
+                        _prev && (_prev.next = _node.data.chainId)
                         const _next = this.getNodeRelation(_node.next)?.node;
-                        _next && (_next.prev = _node.data.identifier)
+                        _next && (_next.prev = _node.data.chainId)
                     }
                 }
             });
@@ -277,7 +292,7 @@ export class GIMIChainStructure<U extends ChainStructureBase> {
                     }
                 })();
                 const identifier = this.generateNodeId(key, group.length);
-                ele.identifier = identifier;
+                ele.chainId = identifier;
                 if (eleIdx === 0) {
                     spliceInfo.start = _node;
                 }
@@ -286,7 +301,7 @@ export class GIMIChainStructure<U extends ChainStructureBase> {
                 }
                 if (lastNodeInfo) {
                     lastNodeInfo.next = identifier;
-                    _node.prev = lastNodeInfo.data.identifier;
+                    _node.prev = lastNodeInfo.data.chainId;
                 }
                 lastNodeInfo = _node;
                 group.push(_node);
@@ -298,22 +313,22 @@ export class GIMIChainStructure<U extends ChainStructureBase> {
         if (!cutInfo.startPrev) {
             // startAt is chainHead, so prev is `null` and need update chainHead
             spliceInfo.start && (spliceInfo.start.prev = null);
-            this.chainHead = spliceInfo.start?.data.identifier;
+            this.chainHead = spliceInfo.start?.data.chainId;
         } else {
-            cutInfo.startPrev.next = spliceInfo.start?.data.identifier ?? null;
-            spliceInfo.start && (spliceInfo.start.prev = cutInfo.startPrev.data.identifier);
+            cutInfo.startPrev.next = spliceInfo.start?.data.chainId ?? null;
+            spliceInfo.start && (spliceInfo.start.prev = cutInfo.startPrev.data.chainId);
         }
         // throw Error("ChainStructure ERROR! cutInfo.startPrev and spliceInfo.start are not exist. cant complete the operation.");
 
         if (!cutInfo.endNext) {
             // cut end point is chainTain, so next is `null` and need update chainTail
             spliceInfo.end && (spliceInfo.end.next = null);
-            this.chainTail = spliceInfo.end?.data.identifier;
+            this.chainTail = spliceInfo.end?.data.chainId;
         } else {
-            cutInfo.endNext.prev = spliceInfo.end?.data.identifier ?? null;
-            spliceInfo.end && (spliceInfo.end.next = cutInfo.endNext.data.identifier);
+            cutInfo.endNext.prev = spliceInfo.end?.data.chainId ?? null;
+            spliceInfo.end && (spliceInfo.end.next = cutInfo.endNext.data.chainId);
         }
-        _r.forEach(ele => ele.identifier = "" as GIMIString);
+        _r.forEach(ele => ele.chainId = "" as GIMIString);
         return _r;
     }
 
@@ -339,7 +354,7 @@ export class GIMIChainStructure<U extends ChainStructureBase> {
     }
 
     unshiftMany(items: U[]): boolean {
-        if (items.some(it => it.identifier !== "")) {
+        if (items.some(it => it.chainId !== "")) {
             // found any id exist, fail to processing 
             return false;
         }
@@ -351,7 +366,7 @@ export class GIMIChainStructure<U extends ChainStructureBase> {
      * push section to tail of chain, if identifier of section is not empty string will push failed 
      */
     push(item: U): boolean {
-        if (item.identifier !== "") {
+        if (item.chainId !== "") {
             // means this item has been in the chain
             return false;
         }
@@ -360,7 +375,7 @@ export class GIMIChainStructure<U extends ChainStructureBase> {
     }
 
     pushMany(items: U[]): boolean {
-        if (items.some(it => it.identifier !== "")) {
+        if (items.some(it => it.chainId !== "")) {
             // found any id exist, fail to processing 
             return false;
         }
@@ -369,7 +384,7 @@ export class GIMIChainStructure<U extends ChainStructureBase> {
     }
     
     pushB(item: U): boolean {
-        if (item.identifier !== "") {
+        if (item.chainId !== "") {
             // this item maybe has been in chain, do not do anything
             return false;
         }
@@ -386,7 +401,7 @@ export class GIMIChainStructure<U extends ChainStructureBase> {
             }
         })()
         const identifier = this.generateNodeId(key, group.length);
-        item.identifier = identifier;
+        item.chainId = identifier;
         group.push(_node);
         if (this.ownIsEmpty()) {
             this.chainHead = identifier;
@@ -437,6 +452,8 @@ export class GIMIChainStructure<U extends ChainStructureBase> {
 
     /**
      * walk on sections, can call prev section and next section
+     * 
+     * prev and next in sections of callback func is basic on chain node realtion.
      */
     walk(config: {startAt?: ChainIdentifier, direction?: ChainWalkDirection}, callback: (sections: {prev?: U, current: U, next?: U}, index: number) => boolean | void): void {
         if (this.ownIsEmpty() || config.startAt === "") {
@@ -444,11 +461,21 @@ export class GIMIChainStructure<U extends ChainStructureBase> {
         }
         const forOuter: {prev?: U, current?: U, next?: U} = {}
         let walkIndex = 0;
-        let continueWalk: boolean = true;
+        let continueWalk: boolean = false;
         this.walkChain(config, (nodeRelation, index) => {
-            forOuter.prev = forOuter.current;
-            forOuter.current = forOuter.next;
-            forOuter.next = nodeRelation.node.data;
+            if (config.direction === "forward") {
+                forOuter.next = forOuter.current;
+                forOuter.current = forOuter.prev;
+                forOuter.prev = nodeRelation.node.data;                
+            } else {
+                forOuter.prev = forOuter.current;
+                forOuter.current = forOuter.next;
+                forOuter.next = nodeRelation.node.data;
+            }
+            if (index === 0) {
+                forOuter.current = this.getNodeRelation(config.direction === "forward" ? nodeRelation.node.next : nodeRelation.node.prev)?.node.data;
+                return true;
+            }
             // here for `.current` exist condition is because walk will one node slower than walkChain
             // more readable code is `if (index !== 0)`
             if (forOuter.current) {
@@ -462,7 +489,10 @@ export class GIMIChainStructure<U extends ChainStructureBase> {
             }
             return true;
         });
-        if (continueWalk && forOuter.next) {
+        if (continueWalk && config.direction === "forward" && forOuter.prev) {
+            // no need to implement the translation of forOuter, because this is already the last one.
+            callback({prev: undefined, current: forOuter.prev, next: forOuter.current}, walkIndex)
+        } else if (continueWalk && forOuter.next) {
             // no need to implement the translation of forOuter, because this is already the last one.
             callback({prev: forOuter.current, current: forOuter.next, next: undefined}, walkIndex)
         }

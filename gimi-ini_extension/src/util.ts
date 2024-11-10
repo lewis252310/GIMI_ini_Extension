@@ -8,8 +8,10 @@ export class GIMIConfiguration {
     static parseingAllowedMaximumCharacters: number;
     static parseingDebounceInterval: number;
     static diagnostics: {
-        conditionExp: boolean;
-    } = {conditionExp: true}
+        level: number;
+        enable: boolean;
+        // conditionExp: boolean;
+    } = {level: 2, enable: true}
 }
 
 interface GIMIIdentifierInfo {

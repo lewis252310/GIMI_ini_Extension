@@ -20,7 +20,7 @@
     "type": "git",
     "url": "https://github.com/lewis252310/GIMI_ini_Extension.git"
   },
-  "version": "0.4.1",
+  "version": "0.4.3",
   "engines": {
     "vscode": "^1.81.0"
   },
@@ -53,10 +53,19 @@
       {
         "title": "GIMI ini",
         "properties": {
-          "GIMIini.diagnostics.conditionExpression": {
+          "GIMIini.diagnostics.enableDiagnostic": {
             "type": "boolean",
             "default": true,
-            "description": "Enable diagnostics on condition expresstion. (Need restart VSCode)"
+            "description": "Enable diagnostics or not. (Need restart VSCode)"
+          },
+          "GIMIini.diagnostics.diagnosticLevel": {
+            "type": "string",
+            "enum": ["Close", "Lite", "Detail"],
+            "enumDescriptions": [
+              "Close all diagnostics.", "Lite mode does not parse conditional expresstion.", "Detail mode will diagnostic anything we supported."
+            ],
+            "default": "Lite",
+            "description": "[Useless] Set the level of diagnosis. (Need restart VSCode)"
           },
           "GIMIini.file.parseingAllowedMaximumLines": {
             "type": "number",

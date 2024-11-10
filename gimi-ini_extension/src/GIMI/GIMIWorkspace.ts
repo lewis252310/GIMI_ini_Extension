@@ -3,6 +3,7 @@ import { languages, TextDocument, Uri, workspace } from "vscode";
 import { GIMIIdentifier, GIMIRule } from "./GIMI";
 import { GIMIFile } from "./GIMIFile";
 import { GIMIProject } from "./GIMIProject";
+import { GIMIConfiguration } from "../util";
 
 export class GIMIWorkspace {
 
@@ -40,7 +41,7 @@ export class GIMIWorkspace {
             return undefined;
         } else if (this.findFile(uri)) {
             this.print(`addFile ${uri.fsPath} failed. current file already exists.`)
-            return undefined;
+            return this.findFile(uri);
         }
         let project = toProject ?? this.findProject(uri);
         if (!project) {
@@ -113,7 +114,18 @@ export class GIMIWorkspace {
     }
 
     static updateDiagnosticCollection(file: GIMIFile): boolean {
+        if (!GIMIConfiguration.diagnostics.enable) {
+            return false;
+        }
         this.diagnosticCollection.set(file.uri, file.getAllDiagnostics());
+        return true;
+    }
+
+    static deleteDiagnostic(file: GIMIFile): boolean {
+        if (!GIMIConfiguration.diagnostics.enable) {
+            return false;
+        }
+        this.diagnosticCollection.delete(file.uri);
         return true;
     }
 }

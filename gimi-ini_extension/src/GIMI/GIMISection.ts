@@ -35,7 +35,7 @@ export class GIMISection extends ChainStructureBase {
     private _rawTitle: string;
     private _name: GIMIString;
     private _fullName: GIMIString | undefined;
-    readonly children: Map<GIMIString, GIMIVariable> = new Map<GIMIString, GIMIVariable>
+    private readonly _variables: Map<GIMIString, GIMIVariable> = new Map<GIMIString, GIMIVariable>
 
     /**
      * After constructor neeed run self.analyze() to real init, or instance just a shell for GIMISection
@@ -95,7 +95,7 @@ export class GIMISection extends ChainStructureBase {
     }
 
     get variables(): GIMIVariable[] {
-        return Array.from(this.children.values());
+        return Array.from(this._variables.values());
     }
 
     get length(): number {
@@ -144,16 +144,8 @@ export class GIMISection extends ChainStructureBase {
         return this._foldinfRanges;
     }
     
-    findVariable(name: GIMIString): GIMIVariable | undefined {
-        const vari = this.children.get(name);
-        if (vari) {
-            const {start, end} = vari.range;
-            const secStP = this.range.start;
-            const _stP = secStP.translate(start.line, start.character);
-            const _edP = secStP.translate(end.line, end.character);
-            return new GIMIVariable(vari.name, new Range(_stP, _edP), vari.type, vari.parent);
-        }
-        return undefined;
+    findVariable(name: string): GIMIVariable | undefined {
+        return this._variables.get(encodeToGIMIString(name));
     }
 
     /**
@@ -191,11 +183,10 @@ export class GIMISection extends ChainStructureBase {
                 }
                 const lineRelStart = line.range.start.translate(-range.start.line, -range.start.character)
                 const lineRelEnd = line.range.end.with(lineRelStart.line);
-                // const {variable: varR, diagnostics} = GIMIVariable.analyzeConstantsLine(line.text, new Range(lineRelStart, lineRelEnd));
                 const {variable: varR, diags} = GIMIVariable.analyzeVariableDeclarationLine(line.text, new Range(lineRelStart, lineRelEnd));
                 if (varR) {
                     const varInsten = new GIMIVariable(varR.name, varR.range, varR.type, this)
-                    this.children.set(varInsten.name, varInsten);
+                    this._variables.set(varInsten.name, varInsten);
                 }
                 this._relDiags.push(...diags);
             }
@@ -368,7 +359,7 @@ export class GIMISection extends ChainStructureBase {
      * 
      * analyze potentially legal section structures in `effectRange`.
      * 
-     * if return undefiend means input range|position is all in namespace area (for now)
+     * if return undefiend means input range is all in namespace area (for now)
      */
     static extractVirtualSections(document: TextDocument, effectrRange?: Range): {sectionFullHeader: string, range: Range}[] | undefined {
         const { startLineIdx, endLineIdx }: {startLineIdx: number, endLineIdx: number} = (() => {
@@ -380,23 +371,16 @@ export class GIMISection extends ChainStructureBase {
                     startLineIdx: Math.min(effectrRange.start.line, docuLastLIdx),
                     endLineIdx: Math.min(effectrRange.end.line, docuLastLIdx)
                 };
-                // const { range: {start: {line: stL}, end: {line: edL}}, startHeader, endHeader} = this.encloseRangeWithHeaders(document, effectAt);
-                // return { 
-                //     startLineIdx: stL,
-                //     // result -1 here because need 1 line befor endHeader if it is exist,
-                //     // for endHeader not exist means it is last line at documnet so dont -1 
-                //     endLineIdx: endHeader ? edL - 1 : edL
-                // }
             }
         })()
         const result: {sectionFullHeader: string, range: Range}[] = [];
         // rngS initial -1 because not every section will start at idx 0, and alos mark that first section has not been found yet.
         const lastSec = {rngS: -1, rngE: 0};
-        const doPushInResult = (): boolean => {
+        const doPushLast = (): boolean => {
             if (lastSec.rngS === -1) {
                 // means that this execute is triggered by found the first section header
                 return false;
-            } else if (lastSec.rngS < lastSec.rngE) {
+            } else if (lastSec.rngS <= lastSec.rngE) {
                 const nameL = document.lineAt(lastSec.rngS);
                 const secEndL = document.lineAt(lastSec.rngE);
                 result.push({
@@ -408,10 +392,6 @@ export class GIMISection extends ChainStructureBase {
             return false;
         }
         for (let i = startLineIdx; i <= endLineIdx; i++) {
-            if (i === endLineIdx) {
-                doPushInResult();
-                continue;
-            }
             const line = document.lineAt(i);
             if (line.isEmptyOrWhitespace) {
                 continue;
@@ -420,16 +400,18 @@ export class GIMISection extends ChainStructureBase {
             if (isCommentText(text)) {
                 // is a comment line
                 continue;
-            } else if (this.isHeaderStr(text) === true) {
+            } else if (this.isHeaderStr(text)) {
                 // section header line
-                doPushInResult();
+                doPushLast();
                 lastSec.rngS = i;
+                lastSec.rngE = i;
             } else {
                 // normal line
                 lastSec.rngE = i;
                 continue;
             }
         }
+        doPushLast();
         return result.length === 0 ? undefined : result;
     }
 }
@@ -495,7 +477,7 @@ function sectionAnalyzeTemplate(docu: TextDocument, rng: Range, secStPos: Positi
     return {lastAnalyzeLine: lastAnalyzeLine.relRng}
 }
 
-function handleBasicKeyValuePair(text: {content: string | TextToken, lineIdx?: number}, refDiags: RelativeDiagnostic[]): { key: TextToken, equal: TextToken, value: TextToken, complete: boolean } {
+function  handleBasicKeyValuePair(text: {content: string | TextToken, lineIdx?: number}, refDiags: RelativeDiagnostic[]): { key: TextToken, equal: TextToken, value: TextToken, complete: boolean } {
     const textToken = typeof text.content == "string" ? TextToken.fromString(text.content, text.lineIdx) : text.content;
     const {key, equal, value} = GIMIDocumentParser.tokenizeKeyValuePair(textToken);
     const _r = {key: key, equal: equal, value: value, complete: true};
@@ -574,6 +556,9 @@ function regHandleStrategyKeySec(key: TextToken, value: TextToken, lineHasSemico
                 info: `Unknow type '${valTk.txt}', The allowed types are ${legalType.join(", ")}.` });
             return false;
         }
+    
+    // } else if (GIMIVariable.isVariableStr(key.txt)) {
+
     } else {
         handleBasicSingleValue({content: value}, refDiags);
     }
@@ -656,7 +641,7 @@ function analyzeRegularSection(document: TextDocument, range: Range, startPositi
         // 把 lineHasSemicolon 移出框架 然後改成一種檢查函數
         // 貌似又不可行了 非常頭疼
 
-        handleStrategy(key, value, lineHasSemicolon, tempDiags);
+        handleStrategy?.(key, value, lineHasSemicolon, tempDiags);
 
         return true;
     })

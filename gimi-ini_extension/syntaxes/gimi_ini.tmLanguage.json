@@ -90,7 +90,205 @@
         }
     ],
     "repository": {
-        "sectionShaderregex": null,
+        "sectionShaderregex": {
+            "name": "meta.section.scope.shaderregex.gimi-ini",
+            "patterns": [
+                {
+                    "begin": "(?i)^\\s*\\[(ShaderRegex.*(\\.Pattern\\.Replace))\\]",
+                    "beginCaptures": {
+                        "1": {
+                            "name": "entity.name.function.shaderregex.pattern.replace.gimi-ini"
+                        },
+                        "2": {
+                            "name": "markup.italic.shaderregex.pattern.replace.gimi-ini"
+                        }
+                    },
+                    "end": "(?=^\\s*\\[.+\\])",
+                    "patterns": [
+                        {
+                            "include": "#comment"
+                        },
+                        {
+                            "match": "(?i)ret",
+                            "name": "keyword.control.return.shaderregex.gimi-ini"
+                        },
+                        {
+                            "match": "^(?!(\\\\t|\\s)*\\$\\{).+(?<!\\\\n)$",
+                            "name": "invalid.illegal.shaderregex.missing.eof.gimi-ini"
+                        },
+                        {
+                            "match": "\\b(mul|mov)\\b",
+                            "name": "keyword.operator.variable.operator.gimi-ini"
+                        },
+                        {
+                            "match": "^(?:\\\\t*|\\s)*(if_\\w+|endif)",
+                            "captures": {
+                                "1": {
+                                    "name": "keyword.control.condition.gimi-ini"
+                                }
+                            }
+                        },
+                        {
+                            "match": "(\\$\\{)(\\w+)(\\})(?:\\.(\\w+))?",
+                            "captures": {
+                                "1": {
+                                    "name": "markup.heading.punctuation.variable.start.gimi-ini"
+                                },
+                                "3": {
+                                    "name": "markup.heading.punctuation.variable.end.gimi-ini"
+                                },
+                                "2": {
+                                    "name": "variable.other.shaderregex.gimi-ini"
+                                },
+                                "4": {
+                                    "name": "variable.other.shaderregex.gimi-ini",
+                                    "patterns": [
+                                        {
+                                            "match": "[xyzw]{1,4}\\b",
+                                            "name": "variable.dump.type.gimi-ini"
+                                        },
+                                        {
+                                            "match": ".+\\b",
+                                            "name": "invalid.illegal.variable.dump.type.gimi-ini"
+                                        }
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "match": "([tvos]\\d{1,3})(?:\\.(\\w+))?",
+                            "captures": {
+                                "1": {
+                                    "name": "variable.other.shaderregex.gimi-ini"
+                                },
+                                "2": {
+                                    "patterns": [
+                                        {
+                                            "match": "[xyzw]{1,4}\\b",
+                                            "name": "variable.dump.type.gimi-ini"
+                                        },
+                                        {
+                                            "match": ".+\\b",
+                                            "name": "invalid.illegal.variable.dump.type.gimi-ini"
+                                        }
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "match": "(\\w+)\\(.*?\\)",
+                            "captures": {
+                                "1": {
+                                    "name": "entity.name.function.gimi-ini"
+                                }
+                            }
+                        }
+                    ]
+                },
+                {
+                    "begin": "(?i)^\\s*\\[(ShaderRegex.*(\\.Pattern))\\]",
+                    "beginCaptures": {
+                        "1": {
+                            "name": "entity.name.function.shaderregex.insertdeclarations.gimi-ini"
+                        },
+                        "2": {
+                            "name": "markup.italic.shaderregex.pattern.gimi-ini"
+                        }
+                    },
+                    "end": "(?=^\\s*\\[.+\\])",
+                    "patterns": [
+                        {
+                            "include": "#comment"
+                        },
+                        {
+                            "match": "(<)(\\w+)(>)",
+                            "captures": {
+                                "1": {
+                                    "name": "string.regexp.keyword.left.gimi-ini"
+                                },
+                                "3": {
+                                    "name": "string.regexp.keyword.right.gimi-ini"
+                                },
+                                "2": {
+                                    "name": "markup.heading.keyword.gimi-ini"
+                                }
+                            }
+                        },
+                        {
+                            "match": "(?i)ret",
+                            "name": "keyword.control.return.shaderregex.gimi-ini"
+                        }
+                    ]
+                },
+                {
+                    "begin": "(?i)^\\s*\\[(ShaderRegex.*(\\.InsertDeclarations))\\]",
+                    "beginCaptures": {
+                        "1": {
+                            "name": "entity.name.function.shaderregex.insertdeclarations.gimi-ini"
+                        },
+                        "2": {
+                            "name": "markup.italic.shaderregex.insertdeclarations.gimi-ini"
+                        }
+                    },
+                    "end": "(?=^\\s*\\[.+\\])",
+                    "patterns": [
+                        {
+                            "include": "#comment"
+                        },
+                        {
+                            "match": "^(\\w+)(?:\\s*(\\([^)]*\\)|\\w+))?\\s+([\\w.]+(?:,\\s*[\\w.]+)*)$",
+                            "captures": {
+                                "1": {
+                                    "name": "entity.name.function.gimi-ini"
+                                },
+                                "2": {
+                                    "name": "entity.name.type.gimi-ini",
+                                    "patterns": [
+                                        {
+                                            "match": "(?i)\\bfloat\\b",
+                                            "name": "support.type.float.gimi-ini"
+                                        }
+                                    ]
+                                },
+                                "3": {
+                                    "patterns": [
+                                        {
+                                            "match": "(?i)\\bfloat\\b",
+                                            "name": "support.type.float.gimi-ini"
+                                        },
+                                        {
+                                            "match": "(?i)\\b[tvs]\\d{1,3}(\\.[xyzw]{1,4})?\\b",
+                                            "name": "variable.other.shaderregex.layer.gimi-ini"
+                                        },
+                                        {
+                                            "match": "\\w+",
+                                            "name": "variable.other.shaderregex.gimi-ini"
+                                        }
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "include": "#variable"
+                        }
+                    ]
+                },
+                {
+                    "begin": "(?i)^\\s*\\[(ShaderRegex.*)\\]",
+                    "beginCaptures": {
+                        "1": {
+                            "name": "entity.name.function.shaderregex.gimi-ini"
+                        }
+                    },
+                    "end": "(?=^\\s*\\[.+\\])",
+                    "patterns": [
+                        {
+                            "include": "#commandListGeneral"
+                        }
+                    ]
+                }
+            ]
+        },
         "sectionConstants": {
             "name": "meta.section.scope.content.gimi-ini",
             "begin": "(?i)^\\s*\\[(Constants)\\]",
@@ -176,17 +374,21 @@
             ]
         },
         "sectionShaderOverride": {
-            "name": "meta.section.scope.shaderregex.gimi-ini",
-            "begin": "(?i)^\\s*\\[(Shaderregex.+)\\]",
+            "name": "meta.section.scope.shaderoverride.gimi-ini",
+            "begin": "(?i)^\\s*\\[(ShaderOverride.+)\\]",
             "beginCaptures": {
                 "1": {
-                    "name": "entity.name.function.shaderregex.gimi-ini"
+                    "name": "entity.name.function.shaderoverride.gimi-ini"
                 }
             },
             "end": "(?=\\[.+\\])",
             "patterns": [
                 {
                     "include": "#commandListGeneral"
+                },
+                {
+                    "name": "keyword.shaderoverride.section.gimi-ini",
+                    "match": "\\b(?i)(allow_duplicate_hash|depth_filter|partner|model|disable_scissor|filter_index)(?= )\\b"
                 }
             ]
         },
@@ -449,7 +651,9 @@
                 {
                     "match": "(?i)^\\s*(convergence|separation|release_(delay|transition(_type)?)|transition(_type)?)\\b( *= *(.*))?",
                     "captures": {
-                        "1": "keyword.other.key.section.incomplete.gimi-ini"
+                        "1": {
+                            "name": "keyword.other.key.section.incomplete.gimi-ini"
+                        }
                     }
                 },
                 {
@@ -517,7 +721,7 @@
                             "patterns": [
                                 {
                                     "name": "markup.underline.link.files.gimi-ini",
-                                    "match": "(?i)(\\.\\\\)?[\\w\\-\\.]+(\\\\[\\w\\-\\.]+)*\\.[\\w\\-\\.]+\\b"
+                                    "match": "(\\.[\\\\\\/])?[\\w\\-\\.]+([\\\\\\/][\\w\\-\\.]+)*\\.[\\w\\-\\.]+\\b"
                                 }
                             ]
                         }
@@ -860,7 +1064,7 @@
                             "patterns": [
                                 {
                                     "name": "support.function.run.gimi-ini",
-                                    "match": "(?i)\\b(CommandList|CustomShader)[\\\\\\w]*\\b"
+                                    "match": "(?i)\\b(CommandList|CustomShader)[\\\\\\.\\w]*\\b"
                                 }
                             ]
                         }
@@ -876,7 +1080,11 @@
             "patterns": [
                 {
                     "name": "variable.name.gimi-ini",
-                    "match": "(?i)\\$[a-z_\\\\][\\w\\\\]*\\b"
+                    "match": "(?i)\\$(\\\\[\\w\\-\\. ]+){2,}\\b"
+                },
+                {
+                    "name": "variable.name.gimi-ini",
+                    "match": "(?i)\\$[\\w_]\\w+\\b"
                 },
                 {
                     "name": "variable.language.gimi-ini",

@@ -20,7 +20,7 @@ function updateUserConfiguration() {
 
 function initUserConfiguration() {
 	const config = workspace.getConfiguration("GIMIini");
-	GIMIConfiguration.diagnostics.conditionExp = config.get<boolean>("diagnostics.conditionExpression") ?? true;
+	GIMIConfiguration.diagnostics.enable = config.get<boolean>("diagnostics.enableDiagnostic") ?? true;
 	updateUserConfiguration();
 }
 
@@ -91,7 +91,7 @@ export function activate(context: ExtensionContext) {
 		// updateDiagonsticsByDocument(document, diagnosticCollection);
 	})
 
-	const didChangeDisposable = workspace.onDidChangeTextDocument(event => {
+	context.subscriptions.push(workspace.onDidChangeTextDocument(event => {
 		/**
 		 * still dont know why there are contentChanges.length === 0 changes and under what state will be triggered
 		 * NaN. i think i know why one change will trigger twice this func
@@ -119,13 +119,24 @@ export function activate(context: ExtensionContext) {
 			// file?.update(event.document, _change);
 		});
 
-	})
-	context.subscriptions.push(didChangeDisposable);
+	}));
 
 	// any textDocument open action will trigger this, also qpening from code and cmd.
 	context.subscriptions.push(workspace.onDidOpenTextDocument(document => {
-		GIMIWorkspace.addFile(document);
+		const file = GIMIWorkspace.addFile(document);
 	}));
+	
+	// any textDocument close action will trigger this, also qpening from code and cmd.
+	context.subscriptions.push(workspace.onDidCloseTextDocument(document => {
+		{
+			// this part is try to fix rare duplicate section diagnostic errors
+			// but it seems that should not rely on the document close action. 
+			// so it still cannot be solved for now
+
+			// const file = GIMIWorkspace.findFile(document.uri);
+			// file && GIMIWorkspace.deleteDiagnostic(file);
+		}
+	}))
 
 	// onDidChangeActiveTextEditor mean when textEditor state has any changing.
 	// focus textEditor changed (trigger once), focus fileTab changed (trigger twice, from -> to).

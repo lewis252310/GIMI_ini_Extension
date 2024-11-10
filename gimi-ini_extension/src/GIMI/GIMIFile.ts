@@ -1,4 +1,4 @@
-import { Uri, Range, Position, TextDocument, Diagnostic, DiagnosticSeverity, TextDocumentContentChangeEvent } from "vscode";
+import { Uri, Range, Position, TextDocument, Diagnostic, DiagnosticSeverity, TextDocumentContentChangeEvent, TextLine } from "vscode";
 import { GIMIIdentifier } from "./GIMI";
 import { GIMIProject } from "./GIMIProject";
 import { GIMISection } from "./GIMISection";
@@ -10,6 +10,7 @@ import { GIMINamespace } from "./GIMINamespace";
 import { GIMIChainStructure, ChainIdentifier } from "./GIMIChainStructure"
 import { isCommentText } from "./parser"
 import { AllSections, getSectionConfig, isPrefixSection, SectionType } from "./GIMISectionTitle";
+import { GIMIConfiguration } from "../util";
 
 // type ChainContentTypes = GIMINamespace | GIMISection
 type ChainContentTypes = GIMISection
@@ -44,6 +45,7 @@ export class GIMIFile {
     private _separators: number[] = [];
     private _diagnostics: Diagnostic[] = [];
     private _root: GIMIProject;
+    private _analyzed: boolean;
     private structureChain: GIMIChainStructure<ChainContentTypes> = new GIMIChainStructure<ChainContentTypes>();
     /**not use now */
     private lastChangeInfo: {inUnit: GIMISection | GIMINamespace, position: Position};
@@ -51,6 +53,7 @@ export class GIMIFile {
     constructor(document: TextDocument, project: GIMIProject) {
         // const name = LowString.build(pathUtil.basename(uri.path));
         // super(name, new Range(new Position(0, 0), new Position(0, 0)), project, parent, children);
+        this._analyzed = false;
         this._name = LowString.build(pathUtil.basename(document.uri.path));
         this._root = project;
         this._range = new Range(
@@ -98,7 +101,7 @@ export class GIMIFile {
     //     return _r;
     // }
     
-    findGlobalVariable(name: GIMIString): GIMIVariable | undefined {
+    findGlobalVariable(name: string): GIMIVariable | undefined {
         const constantsSecs = this.structureChain.getGroup(AllSections.Constants.name as GIMIString);
         if (!constantsSecs) {
             return undefined;
@@ -122,12 +125,15 @@ export class GIMIFile {
      * update section duplicate diagnostics (file level) 
      */
     private updateDiagnostics(): void {
+        if (!GIMIConfiguration.diagnostics.enable) {
+            return;
+        }
         this._diagnostics.length = 0;
         this.structureChain.getAllGroup().forEach(_g => {
             const { datas: sections } = _g;
             if (isPrefixSection(sections[0].type) && sections.length > 1) {
                 sections.forEach(_sec => {
-                    const range = new Range(_sec.range.start.translate(0, 1), _sec.range.start.translate(0, _sec.rawTitle.length - 2));
+                    const range = new Range(_sec.range.start.translate(0, 1), _sec.range.start.translate(0, _sec.rawTitle.length - 1));
                     this._diagnostics.push(new Diagnostic(
                         range, "This type of section cant be duplicate names", DiagnosticSeverity.Error
                     ))
@@ -250,8 +256,8 @@ export class GIMIFile {
         })
         if (_r.start === undefined || _r.end === undefined) {
             // if chain.length === 0, will happen this
+            // throw new Error("getChainInfoFrom() ERRORed! one of start or end is undefiend")
             return undefined;
-            throw new Error("getChainInfoFrom() ERRORed! one of start or end is undefiend")
         }
         return {start: _r.start, end: _r.end, range: _r.range}
     }
@@ -266,10 +272,10 @@ export class GIMIFile {
     }
 
     recalcSectionsRangeFrom(section: GIMISection, delta: number): boolean {
-        if (section.identifier === "") {
+        if (section.chainId === "") {
             return false;
         }
-        this.structureChain.walk({startAt: section.identifier}, unit => {
+        this.structureChain.walk({startAt: section.chainId}, unit => {
             unit.current.offsetRangeLine(delta);
         });
         return true;
@@ -281,6 +287,10 @@ export class GIMIFile {
     analyze(document: TextDocument): boolean {
         if (!this.isSameUri(document.uri)) {
             console.error('Cant analyzeFile, uri is not same.')
+            return false;
+        }
+        if (this._analyzed) {
+            console.error(`File ${document.uri.fsPath} has been analyzed.`)
             return false;
         }
         this._range = new Range(
@@ -317,6 +327,9 @@ export class GIMIFile {
             console.error('Cant updateFile, uri is not same.')
             return false;
         }
+        if (changes.length <= 0) {
+            return false;
+        }
 
         // this.printSectionState("Before updateB");
 
@@ -330,8 +343,9 @@ export class GIMIFile {
                 // const edPos = document.positionAt(fixedOffset + _c.text.length);
                 const textRange = new Range(document.positionAt(fixedOffset), document.positionAt(fixedOffset + _c.text.length));
                 cumulativeOffset += (_c.text.length - _c.rangeLength);
-                const localDeltaLine = -(_c.range.end.line - _c.range.start.line) + (textRange.end.line - textRange.start.line);
-                totalDeltaLine += localDeltaLine;
+                const selfDeltaLine = -(_c.range.end.line - _c.range.start.line) + (textRange.end.line - textRange.start.line);
+                const deltaLStP = totalDeltaLine
+                totalDeltaLine += selfDeltaLine;
                 const cumulativeDeltaLine = totalDeltaLine;
                 return {
                     delete: {
@@ -344,94 +358,21 @@ export class GIMIFile {
                         range: textRange,
                         fromOffset: fixedOffset
                     },
-                    deltaLine: localDeltaLine,
-                    cumulativeDeltaLine
+                    // deltaLine: selfDeltaLine,
+                    deltaLine: {
+                        startP: deltaLStP,
+                        endP: cumulativeDeltaLine,
+                        self: selfDeltaLine,
+                        cumulative: cumulativeDeltaLine,
+                    }
                 }
             })
             return {finalChanges, totalDeltaLine};
         })();
-        const chainRelations = finalChanges.map(_c => {
-            return this.getSectionRelationFrom(_c.delete.range);
-        }).filter(_v => _v !== undefined);
-        if (chainRelations.length === 0) {
-            this.GIMINamespace.analyze(document);
-            return true;
-        }
-        finalChanges.forEach((_c, idx) => {
-            const {start: addSt, end: addEd} = _c.added.range;
-            const {start: addStRel, end: addEdRel} = chainRelations[idx];
 
-            let changeStSec: GIMISection | "fileTop" | "fileButtom" = "fileTop";
-            let changeEdSec: GIMISection | "fileTop" | "fileButtom" = "fileTop";
-            let changeStPrevSec: GIMISection | undefined = undefined;
-            let changeOffsetFromSec: GIMISection | undefined = undefined;
-            let searchStL: number = addSt.line;
-            let searchEdL: number = addEd.line;
-            if (addStRel.state === "in") {
-                changeStPrevSec = addStRel.data.isAfter;
-                if (addSt.line === addStRel.data.isIn.range.start.line) {
-                    const lineText = document.lineAt(addSt).text
-                    if (GIMISection.isHeaderStr(lineText)) {
-                        changeStSec = addStRel.data.isIn
-                    } else {
-                        changeStSec = addStRel.data.isAfter ?? "fileTop"
-                    }
-                } else {
-                    changeStSec = addStRel.data.isIn
-                }
-            } else if (addStRel.state === "buttom") {
-                changeStSec = "fileButtom";
-                changeStPrevSec = addStRel.data.isAfter;
-            } else {
-                changeStSec = "fileTop"
-                // state === "top" always not have prev, so undefiend
-                changeStPrevSec = undefined;
-            }
-
-            if (addEdRel.state === "in") {
-                if (addEd.line === addEdRel.data.isIn.range.start.line + _c.cumulativeDeltaLine) {
-                    const lineText = document.lineAt(addEd.line).text
-                    if (_c.delete.length === 0) {
-                        // insert
-                        changeEdSec = addEdRel.data.isIn;
-                        changeOffsetFromSec = addEdRel.data.isBefore;
-                        // if (_c.added.range.isSingleLine) {
-                        if (GIMISection.isHeaderStr(lineText)) {
-                            searchEdL++
-                        }
-                    } else if (_c.delete.length > 0) {
-                        // delete or replace
-                        changeEdSec = addEdRel.data.isIn;
-                        changeOffsetFromSec = addEdRel.data.isBefore;
-                        if (GIMISection.isHeaderStr(lineText)) {
-                            searchEdL++
-                        }
-                    } else {
-                        throw Error("WTF is this change do?");
-                    }
-                } else {
-                    changeEdSec = addEdRel.data.isIn
-                    changeOffsetFromSec = addEdRel.data.isBefore;
-                }
-            } else if (addEdRel.state === "top") {
-                changeEdSec = "fileTop";
-                changeOffsetFromSec = addEdRel.data.isBefore;
-            } else {
-                // addEdRel.state === "buttom"
-                changeEdSec = "fileButtom";
-                changeOffsetFromSec = undefined;
-            }
-
-            const extractRange = (() => {
-                let _rng = GIMISection.encloseRangeWithHeaders(document, new Range(searchStL, 0, searchEdL, 0));
-                if (_rng.state === "on") {
-                    return new Range(_rng.position, _rng.position);
-                } else {
-                    return new Range(_rng.start.position, _rng.end.position);
-                }
-            })()
-            const virtualSecs = GIMISection.extractVirtualSections(document, extractRange);
-            let prevSecEndL = changeStPrevSec ? changeStPrevSec.range.end.line : 0;
+        if (this.structureChain.isEmpty()) {
+            const virtualSecs = GIMISection.extractVirtualSections(document, new Range(finalChanges[0].delete.range.start, new Position(document.lineCount - 1, 0)));
+            let prevSecEndL = 0;
             const addedSecs = virtualSecs?.map(({range, sectionFullHeader: header}, index) => {
                 const section = new GIMISection({
                     titleLine: header,
@@ -444,65 +385,288 @@ export class GIMIFile {
                 prevSecEndL = range.end.line;
                 return section;
             })
-            
-            if (changeStSec === "fileTop" && changeEdSec === "fileTop") {
-                if (addedSecs) {
-                    const state = this.structureChain.pushMany(addedSecs);
-                    if (!state) {
-                        throw Error("updateB pushMany ERROR! pushMany faild");
-                    }
-                }
-            } else if (changeStSec === "fileButtom" && changeEdSec === "fileButtom") {
-                if (addedSecs) {
-                    const state = this.structureChain.unshiftMany(addedSecs);
-                    if (!state) {
-                        throw Error("updateB pushMany ERROR! pushMany faild");
-                    }
-                }
-            } else if (changeStSec === "fileTop" && changeEdSec === "fileButtom") {
-                this.structureChain.clear();
-                if (addedSecs) {
-                    this.structureChain.pushMany(addedSecs);
-                }
-            } else {
-                if (this.structureChain.isNotEmpty() === false) {
-                    throw Error("updateB ERROR! why structureChain at here is empty? why??")
-                }
-                const spliceStId: ChainIdentifier = (() => {
-                    if (changeStSec === "fileTop") {
-                        return "HEAD";
-                    } else if (changeStSec === "fileButtom") {
-                        return "TAIL";
-                    } else {
-                        return changeStSec.identifier;
-                    }
-                })()
-                const spliceEdId: ChainIdentifier = (() => {
-                    if (changeEdSec === "fileTop") {
-                        return "HEAD";
-                    } else if (changeEdSec === "fileButtom") {
-                        return "TAIL";
-                    } else {
-                        return changeEdSec.identifier;
-                    }
-                })()
-                if (addedSecs) {
-                    this.structureChain.splice(spliceStId, spliceEdId, ...addedSecs);
+            addedSecs && this.structureChain.pushMany(addedSecs);
+            this.GIMINamespace.analyze(document);
+            return true;
+        }        
+        // after here, structureChain definitely have content.
+
+        const updateInfoColl = (() => {
+            type SecsRel = {prev?: GIMISection, affected: Set<GIMISection>, next?: GIMISection};
+            type Info = {rng: Range, secs: SecsRel, deltaL: number}
+            const infos: {rng: Range, secs: SecsRel, deltaL: number}[] = [];
+            const updateSecsRel = (oldD: SecsRel, newD: SecsRel) => {
+                oldD.prev = newD.prev;
+                oldD.next = newD.next;
+                const oldAffectedArr = [...oldD.affected.values()]
+                const newAffectedArr = [...newD.affected.values()]
+                if (oldAffectedArr[0] === newAffectedArr[1]) {
+                    oldD.affected.forEach(sec => newD.affected.add(sec));
+                    oldD.affected = newD.affected;
+                } else if (oldAffectedArr[1] === newAffectedArr[0]) {
+                    newD.affected.forEach(sec => oldD.affected.add(sec));
                 } else {
-                    this.structureChain.splice(spliceStId, spliceEdId);
+                    newD.affected.forEach(sec => oldD.affected.add(sec));
+                    // throw Error("updateInfoColl updateSecsRel() ERROR! something is")
+                }
+            };
+            return {
+                add: (rng: Range, secsRel: SecsRel, deltaLine: number) => {
+                    const lastInfo = infos.pop();
+                    if (lastInfo && lastInfo.rng.contains(rng)) {
+                        lastInfo.rng = new Range(lastInfo.rng.start, rng.end);
+                        updateSecsRel(lastInfo.secs, secsRel);
+                        lastInfo.deltaL = deltaLine;
+                        infos.push(lastInfo);
+                    } else if (lastInfo && lastInfo.rng.intersection(rng)) {
+                        lastInfo.rng = lastInfo.rng.union(rng);
+                        updateSecsRel(lastInfo.secs, secsRel);
+                        lastInfo.deltaL = deltaLine;
+                        infos.push(lastInfo);
+                    } else {
+                        lastInfo && infos.push(lastInfo);
+                        const {prev, affected, next} = secsRel
+                        infos.push({rng, secs: {prev, next, affected: new Set(affected)}, deltaL: deltaLine});
+                    }
+                },
+                get updates() {
+                    return infos.map(info => {
+                        const affected = [...info.secs.affected.values()];
+                        const stAt = affected.at(0);
+                        const edAt = affected.at(-1);
+                        if (!stAt || !edAt) {
+                            // throw Error("affectedSec ERROR! stSec or edSec is undefiend!");
+                            console.log("affectedSec ERROR! stSec or edSec is undefiend!");
+                            return undefined
+                        }
+                        return {stAt, edAt, affected, range: info.rng};
+                    }).filter(info => info !== undefined);
+                },
+                get recalcRngs() {
+                    const _r: {stAt: GIMISection, edAt?: GIMISection, deleteLine: number}[] = []
+                    for (let i = 0; i < infos.length; i++) {
+                        const curtInfo = infos[i];
+                        const nextInfo = infos[i + 1];
+                        const stAt = curtInfo.secs.next;
+                        if (!stAt) {
+                            /** if next section is undefined, means affected is contains chain tail.
+                             *  so not need to add anything after this one
+                             */
+                            break;
+                        }
+                        const edAt = nextInfo?.secs.prev;
+                        _r.push({stAt, edAt, deleteLine: curtInfo.deltaL})
+                    }
+                    return _r;
                 }
             }
-            if (changeStSec === "fileTop") {
-                this.GIMINamespace.analyze(document);
-            }
-            if (_c.deltaLine !== 0 && changeOffsetFromSec) {
-                this.recalcSectionsRangeFrom(changeOffsetFromSec, _c.deltaLine);
-                // this.recalcSectionsRangeAt(change.range.end.line, deltaLines);
+        })()
+        const checkPos = ((pos: Position) => {
+            return {
+                isIn: (rng: Range) => {
+                    return pos.isAfterOrEqual(rng.start) && pos.isBefore(rng.end);
+                },
+                isAfter: (rng: Range) => {
+                    return pos.isAfterOrEqual(rng.end);
+                },
+                isBefore: (rng: Range) => {
+                    return pos.isBefore(rng.start);
+                }
             }
         })
 
-        // this.printSectionState("After updateB");
+        let isInChangeRange: boolean = false;
+        let currentDeltaLine: number = 0;
+        let changeItemIdx = 0;
+        const procUpdate = (() => {
+            let lastExistSecTitleL: TextLine = document.lineAt(0);
+            let stP: Position | null = null;
+            const secStack: Set<GIMISection> = new Set();
+            let secStackPrev: GIMISection | undefined = undefined;
+            type Secs = {prev?: GIMISection, current: GIMISection, next?: GIMISection};
+            let secs: Secs | undefined = undefined;
+            let maybeTitle: TextLine | undefined = undefined;
+            let deltaL: number = 0;
+            const check = () => {
+                if (!secs || !maybeTitle) {
+                    throw Error("procUpdateRng ERROR! the one of member is empty!");
+                }
+                return true;
+            };
+            return {
+                reset: (curtSecs: Secs, maybeTitleL: TextLine, deltaLine: number) => {
+                    secs = curtSecs;
+                    maybeTitle = maybeTitleL;
+                    deltaL = deltaLine;
+                    secStack.clear();
+                    secStackPrev = undefined;
+                },
+                st: (alsoPrevSec: boolean) => {
+                    check();
+                    if (alsoPrevSec && secs!.prev) {
+                        secStackPrev = this.structureChain.getRelation(secs!.prev.chainId)?.prev;
+                        secStack.add(secs!.prev);
+                        secStack.add(secs!.current);
+                        stP = lastExistSecTitleL.range.start
+                    } else {
+                        secStackPrev = secs!.prev;
+                        secStack.add(secs!.current);
+                        stP = maybeTitle!.range.start;
+                    }
+                },
+                mid: () => {
+                    check();
+                    secStack.add(secs!.current);
+                },
+                ed: () => {
+                    check();
+                    if (!stP) {
+                        throw Error("Start pos is not exist.");
+                    }
+                    const edPL = secs?.next ? secs.next.range.start.line + currentDeltaLine - 1 : document.lineCount - 1 ;
+                    secStack.add(secs!.current);
+                    updateInfoColl.add( new Range(stP, document.lineAt(edPL).range.end),
+                        {prev: secStackPrev, affected: secStack, next: secs!.next}, deltaL);
+                },
+                postProc: () => {
+                    check();
+                    if (maybeTitle!.text.trim() === secs!.current.rawTitle) {
+                        lastExistSecTitleL = maybeTitle!;
+                    }
+                }
+            };
+        })();
+        {
+            // namespace scope process need have onw block
+            let updateNamespace: boolean = false;
+            const {current: headSec, next: nextSec} = this.structureChain.getRelation("HEAD")!
+            const namespaceScope = (() => {
+                const headstL = headSec.range.start.line;
+                if (headstL > 0) {
+                    return new Range(new Position(0, 0), headSec.range.start);
+                }
+                return undefined;
+            })();
+            while (namespaceScope && finalChanges[changeItemIdx]) {
+                const changeItem = finalChanges[changeItemIdx];
+                const {start: delStP, end: delEdP} = changeItem.delete.range;
+                const maybeTitleL = document.lineAt(0);
+                // console.log(maybeTitleL.text);
+                if (checkPos(delStP).isIn(namespaceScope) && checkPos(delEdP).isIn(namespaceScope)) {
+                    // full change range in content, update deltaL and idx
+                    changeItemIdx++;
+                    currentDeltaLine = changeItem.deltaLine.cumulative;
+                    updateNamespace = true;
+                    continue;
+                } else if (checkPos(delStP).isIn(namespaceScope) && checkPos(delEdP).isAfter(namespaceScope)) {
+                    isInChangeRange = true;
+                    currentDeltaLine = changeItem.deltaLine.startP;
+                    updateNamespace = true;
+                    procUpdate.reset(this.structureChain.getRelation("HEAD")!, maybeTitleL, changeItem.deltaLine.self);
+                    procUpdate.st(false);
+                    procUpdate.postProc();
+                    break;
+                } else if (isInChangeRange && checkPos(delEdP).isIn(namespaceScope)) {
+                    throw Error("changeRng end alone in namesapce spoce, should not happend.");
+                    continue;
+                } else if (isInChangeRange) {
+                    throw Error("changeRng across full namesapce spoce, should not happend.");
+                    break;
+                } else {
+                    // console.log(`changeRng '${changeItemIdx}' is after namesapce spoce.`);
+                    break;
+                }
+            }
+            if (updateNamespace) {
+                this.GIMINamespace.analyze(document);
+            }
+        }
+        this.structureChain.walk({}, (secs, chainIdx) => {
+            if (!finalChanges[changeItemIdx]) {
+                return false;
+            }
+            const {prev: prevSec, current: curtSec, next: nextSec} = secs;
+            const curtSecStPos = curtSec.range.start;
+            const nextSecStPos = nextSec?.range.start ?? new Position(document.lineCount, 0);
+            const curtSecScope = new Range(curtSec.range.start, nextSec?.range.start ?? new Position(document.lineCount, 0));
+            const maybeTitleL = document.lineAt(curtSec.range.start.line + currentDeltaLine);
+            // console.log(maybeTitleL.text);
+            while (finalChanges[changeItemIdx]) {
+                const changeItem = finalChanges[changeItemIdx];
+                const {start: delStP, end: delEdP} = changeItem.delete.range;
+                procUpdate.reset(secs, maybeTitleL, changeItem.deltaLine.cumulative);
+                if (checkPos(delStP).isIn(curtSecScope) && checkPos(delEdP).isIn(curtSecScope)) {
+                    if (delStP.line === curtSecStPos.line && !GIMISection.isHeaderStr(maybeTitleL.text)) {
+                        procUpdate.st(true);
+                    } else {
+                        procUpdate.st(false);
+                    }
+                    changeItemIdx++;
+                    currentDeltaLine = changeItem.deltaLine.cumulative;
+                    procUpdate.ed();
+                    continue;
+                } else if (checkPos(delStP).isIn(curtSecScope) && checkPos(delEdP).isAfter(curtSecScope) && delEdP.isAfterOrEqual(nextSecStPos)) {
+                    if (delStP.line === curtSecStPos.line && !GIMISection.isHeaderStr(maybeTitleL.text)) {
+                        procUpdate.st(true);
+                    } else {
+                        procUpdate.st(false);
+                    }
+                    isInChangeRange = true;
+                    currentDeltaLine = changeItem.deltaLine.startP;
+                    break;
+                } else if (isInChangeRange && checkPos(delEdP).isIn(curtSecScope)) {
+                    isInChangeRange = false;
+                    currentDeltaLine = changeItem.deltaLine.endP;
+                    changeItemIdx++;
+                    procUpdate.ed();
+                    continue;
+                } else if (isInChangeRange) {
+                    procUpdate.mid();
+                    // console.log(`changeRng '${changeItemIdx}' across full '${curtSec.fullName}' section.`);
+                    break;
+                } else {
+                    // console.log(`changeRng '${changeItemIdx}' is after '${curtSec.fullName}' section.`);
+                    break;
+                }
+            }
+            procUpdate.postProc();
+        });
 
+        updateInfoColl.updates.forEach((update, idx) => {
+            if (update === undefined) {
+                return;
+            }
+            const virtualSecs = GIMISection.extractVirtualSections(document, update.range);
+            let prevSecEndL: number | undefined = undefined;
+            const addedSecs = virtualSecs?.map(({range, sectionFullHeader: header}, index) => {
+                const section = new GIMISection({
+                    titleLine: header,
+                    range: range,
+                    offset: prevSecEndL ? range.start.line - prevSecEndL : 0,
+                    root: this._root,
+                    parent: this
+                });
+                section.analyze(document, range);
+                prevSecEndL = range.end.line;
+                return section;
+            });
+            if (addedSecs) {
+                this.structureChain.splice(update.stAt.chainId, update.edAt.chainId, ...addedSecs);
+            } else {
+                this.structureChain.splice(update.stAt.chainId, update.edAt.chainId);
+            }
+            // console.log("");
+        })
+
+        updateInfoColl.recalcRngs.forEach(item => {
+            this.structureChain.walk({startAt: item.stAt.chainId}, unit => {
+                unit.current.offsetRangeLine(item.deleteLine);
+                if (item.edAt && unit.current.chainId === item.edAt.chainId) {
+                    return false;
+                }
+            })
+        })
+        
         this.updateDiagnostics();
         GIMIWorkspace.updateDiagnosticCollection(this);
 

@@ -378,7 +378,7 @@ export class GIMIDocumentParser {
         const diags: RelativeDiagnostic[] = [];
         const stack: ParserToken[][] = [];
         let currentTokens: ParserToken[] = [];
-        if (!GIMIConfiguration.diagnostics.conditionExp) {
+        if (!GIMIConfiguration.diagnostics.enable) {
             return [];
         }
         const tokens = textToken.regexSplit(txt => {

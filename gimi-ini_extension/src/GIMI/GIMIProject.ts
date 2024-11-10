@@ -46,9 +46,12 @@ export class GIMIProject {
      * get all existing namespaces.
      */
     get namespaces(): GIMIString[] {
-        // const _r = this.files.map(_f => _f.namespace).filter(_ns => _ns !== undefined);
-        // return _r as GIMIString[];
-        return this.files.map(_f => _f.namespace).filter(_ns => _ns !== undefined)
+        return this.files.reduce((acc, _f) => {
+            if (_f.namespace) {
+                acc.push(_f.namespace);
+            }
+            return acc;
+        }, [] as GIMIString[]);
     }
 
     listAllFilesId(): GIMIIdentifier[] {
@@ -159,7 +162,7 @@ export class GIMIProject {
                 return;
             } else {
                 file.globalVariables.forEach(gVar => {
-                    _r.push(`\\${file.namespaceRaw}\\${gVar.name}`);
+                    _r.push(`\\${file.namespaceRaw}\\${gVar.rawName}`);
                 })
             }
         })

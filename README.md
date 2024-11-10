@@ -8,6 +8,17 @@ Please read other README at deeper folders.
 
 ---
 
+<div align="center">
+
+### ✨⭐✨⭐✨
+
+[![GitHub release (latest)](https://img.shields.io/github/v/release/lewis252310/GIMI_ini_Extension)](https://github.com/lewis252310/GIMI_ini_Extension/releases)
+![GitHub downloads (all releases)](https://img.shields.io/github/downloads/lewis252310/GIMI_ini_Extension/total)
+
+</div>
+
+---
+
 ## What is GIMI ini extension 
 
 A famous anime game mod ini config file support extension
