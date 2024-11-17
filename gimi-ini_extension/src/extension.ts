@@ -6,23 +6,11 @@ import { GIMIHoverProvider } from './hoverMessage';
 import { GIMIFoldingRangeProvider } from './foldingRange';
 import { GIMICompletionItemProvider } from './autoCompletion';
 import { GIMIDefinitionProvider } from './definitionJump';
-import { GIMIDiagnosticsManager } from './diagnostics';
-import { GIMIConfiguration } from './util';
-import { GIMIWorkspace } from './GIMI/GIMIWorkspace'
-import { debounceA } from './debounce'
+import { DiagnosticsManager } from './diagnostics';
+import { ConfigurationsManager } from './configurations';
+import { GIMIWorkspace } from './GIMI/GIMIWorkspace';
+import { debounceA } from './debounce';
 import path from 'path';
-
-function updateUserConfiguration() {
-	const config = workspace.getConfiguration("GIMIini");
-	GIMIConfiguration.parseingAllowedMaximumLines = config.get<number>("file.parseingAllowedMaximumLines") ?? 1000;
-	GIMIConfiguration.parseingAllowedMaximumCharacters = config.get<number>("parseingAllowedMaximumCharacters") ?? 30000;
-}
-
-function initUserConfiguration() {
-	const config = workspace.getConfiguration("GIMIini");
-	GIMIConfiguration.diagnostics.enable = config.get<boolean>("diagnostics.enableDiagnostic") ?? true;
-	updateUserConfiguration();
-}
 
 function testTriggerFunc() {
 	console.log('\nStart testTrigger Cmd\n');
@@ -40,15 +28,8 @@ export function activate(context: ExtensionContext) {
 	// ========================================================
 	//                      Setting declare
 	// ========================================================
-	context.subscriptions.push(workspace.onDidChangeConfiguration(event => {
-		if (event.affectsConfiguration("GIMIini.file.parseingAllowedMaximumLines")) {
-			updateUserConfiguration();
-		}
-		if (event.affectsConfiguration("GIMIini.file.parseingAllowedMaximumCharacters")) {
-			updateUserConfiguration();
-		}
-	}))
-	initUserConfiguration();
+	context.subscriptions.push(ConfigurationsManager.onDidChangeConfiguration());
+	ConfigurationsManager.init();
 
 	// ========================================================
 	//                 Contributes and Listener
@@ -79,11 +60,7 @@ export function activate(context: ExtensionContext) {
 
 	// languages.setLanguageConfiguration('gimi-ini', {wordPattern: /(-?\d*\.\d\w*)|([^\`\~\!\@\#\%\^\&\*\(\)\-\=\+\[\{\]\}\|\;\:\'\"\,\.\<\>\/\?\s]+)/g})
 
-	const diagnosticManager = GIMIDiagnosticsManager.getInstance();
-	context.subscriptions.push(diagnosticManager.getDiagnosticCollection());
-	
-	// const diagnosticCollection = languages.createDiagnosticCollection('gimi-ini');
-	context.subscriptions.push(GIMIWorkspace.diagnosticCollection);
+	context.subscriptions.push(DiagnosticsManager.diagnosticCollection);
 
 	// A very crude debounced implementation
 	const debouncedOnDidChange = debounceA((document: TextDocument) => {

@@ -5,7 +5,8 @@ import { GIMIProject } from "./GIMIProject";
 import { encodeToGIMIString, GIMIString, LowString } from "./GIMIString";
 import { GIMIVariable } from "./GIMIVariable";
 import { GIMIFile } from "./GIMIFile";
-import { RelativeDiagnostic, isCommentText, GIMIDocumentParser, TextToken } from "./parser";
+import { isCommentText, GIMIDocumentParser, TextToken } from "./parser";
+import { TempDiagnostic, DiagnosticsManager } from "../diagnostics"
 
 type HeaderBasedRangeResultT = {
     state: "between", start: {lineText: string | undefined, position: Position}, end: {lineText: string | undefined, position: Position}
@@ -26,7 +27,7 @@ export class GIMISection extends ChainStructureBase {
     
     range: Range;
 
-    private _relDiags: RelativeDiagnostic[] = [];
+    private _relDiags: TempDiagnostic[] = [];
     private _diagnostics: Diagnostic[] | undefined = undefined;
 
     private _relFoldRngs: Range[] = [];
@@ -416,13 +417,13 @@ export class GIMISection extends ChainStructureBase {
     }
 }
 
-function analyzeSectionTitle(line: TextLine): RelativeDiagnostic[] {
+function analyzeSectionTitle(line: TextLine): TempDiagnostic[] {
     const rawText = line.text;
     if (!GIMISection.isHeaderStr(rawText.trimStart())) {
         console.log("throw Error(analyzeSectionTitle ERROR!)")
         throw Error("analyzeSectionTitle ERROR! input is not a legal section title.");
     }
-    const _r: RelativeDiagnostic[] = [];
+    const _r: TempDiagnostic[] = [];
     const lineRelSt = line.range.start.with(0);
     const lineRelEd = line.range.end.with(0);
     const lineRelRng = new Range(lineRelSt, lineRelEd);
@@ -452,7 +453,7 @@ function analyzeSectionTitle(line: TextLine): RelativeDiagnostic[] {
     return _r;
 }
 
-function sectionAnalyzeTemplate(docu: TextDocument, rng: Range, secStPos: Position, callback: (rawText: string, lineRelRng: Range, lineHasSemicolon: RelativeDiagnostic | undefined) => boolean): {lastAnalyzeLine: Range} {
+function sectionAnalyzeTemplate(docu: TextDocument, rng: Range, secStPos: Position, callback: (rawText: string, lineRelRng: Range, lineHasSemicolon: TempDiagnostic | undefined) => boolean): {lastAnalyzeLine: Range} {
     const lastAnalyzeLine = {relRng: new Range(0, 0, 0, 0)};
     for (let i = rng.start.line; i <= rng.end.line; i++) {
         const line = docu.lineAt(i);
@@ -464,7 +465,7 @@ function sectionAnalyzeTemplate(docu: TextDocument, rng: Range, secStPos: Positi
         // const lineRelEd = line.range.end.with(lineRelSt.line);
         const lineRelRng = new Range(lineRelSt, line.range.end.with(lineRelSt.line));
         lastAnalyzeLine.relRng = lineRelRng;
-        const lineHasSemicolon: RelativeDiagnostic | undefined = (() => {
+        const lineHasSemicolon: TempDiagnostic | undefined = (() => {
             if (line.text.includes(';') && line.text.match(/".*?"|;/g)?.some(_m => _m === ';')) {
                 return { relRng: lineRelRng, lv: DiagnosticSeverity.Error,
                     info: "Comments must be on a separate line. located in codes is illegal."
@@ -477,7 +478,7 @@ function sectionAnalyzeTemplate(docu: TextDocument, rng: Range, secStPos: Positi
     return {lastAnalyzeLine: lastAnalyzeLine.relRng}
 }
 
-function  handleBasicKeyValuePair(text: {content: string | TextToken, lineIdx?: number}, refDiags: RelativeDiagnostic[]): { key: TextToken, equal: TextToken, value: TextToken, complete: boolean } {
+function  handleBasicKeyValuePair(text: {content: string | TextToken, lineIdx?: number}, refDiags: TempDiagnostic[]): { key: TextToken, equal: TextToken, value: TextToken, complete: boolean } {
     const textToken = typeof text.content == "string" ? TextToken.fromString(text.content, text.lineIdx) : text.content;
     const {key, equal, value} = GIMIDocumentParser.tokenizeKeyValuePair(textToken);
     const _r = {key: key, equal: equal, value: value, complete: true};
@@ -489,7 +490,7 @@ function  handleBasicKeyValuePair(text: {content: string | TextToken, lineIdx?: 
     return _r;
 }
 
-function handleBasicFirstPart(text: {content: string | TextToken, lineIdx?: number}, refDiags: RelativeDiagnostic[]): { line: TextToken, first: TextToken, content: TextToken, complete: boolean } {
+function handleBasicFirstPart(text: {content: string | TextToken, lineIdx?: number}, refDiags: TempDiagnostic[]): { line: TextToken, first: TextToken, content: TextToken, complete: boolean } {
     const textToken = typeof text.content == "string" ? TextToken.fromString(text.content, text.lineIdx) : text.content;
     const {first, content} = GIMIDocumentParser.tokenizeFirstPart(textToken);
     const _r = {line: textToken, first: first, content: content, complete: true};
@@ -501,7 +502,7 @@ function handleBasicFirstPart(text: {content: string | TextToken, lineIdx?: numb
     return _r;
 }
 
-function handleBasicSingleValue(text: {content: string | TextToken, lineIdx?: number}, refDiags: RelativeDiagnostic[]): {value: TextToken, extra: TextToken, complete: boolean} {
+function handleBasicSingleValue(text: {content: string | TextToken, lineIdx?: number}, refDiags: TempDiagnostic[]): {value: TextToken, extra: TextToken, complete: boolean} {
     const textToken = typeof text.content == "string" ? TextToken.fromString(text.content, text.lineIdx) : text.content;
     const {value, extra} = GIMIDocumentParser.tokenizeSingleValue(textToken);
     const _r = {value: value, extra: extra, complete: true};
@@ -530,9 +531,9 @@ function getValueRegexPattern(section: AllSectionsKeys, key: string): RegExp {
     return pattern ?? SECTIONKEYVALUEREGEXRULE["DEFAULT"]!["DEFAULT"];
 }
 
-type RegularSectionHandleStrategyT = (key: TextToken, value: TextToken, lineHasSemicolon: RelativeDiagnostic | undefined, refDiags: RelativeDiagnostic[]) => boolean;
+type RegularSectionHandleStrategyT = (key: TextToken, value: TextToken, lineHasSemicolon: TempDiagnostic | undefined, refDiags: TempDiagnostic[]) => boolean;
 
-function regHandleStrategyKeySec(key: TextToken, value: TextToken, lineHasSemicolon: RelativeDiagnostic | undefined, refDiags: RelativeDiagnostic[]): boolean {
+function regHandleStrategyKeySec(key: TextToken, value: TextToken, lineHasSemicolon: TempDiagnostic | undefined, refDiags: TempDiagnostic[]): boolean {
     if (key.txt !== "key" && lineHasSemicolon) {
         // only `key` key need passby semicolon check. -_-
         refDiags.push(lineHasSemicolon);
@@ -546,16 +547,21 @@ function regHandleStrategyKeySec(key: TextToken, value: TextToken, lineHasSemico
         refDiags.push(...result);
     } else if (key.txt === "type") {
         const {value: valTk, extra: extTk} = GIMIDocumentParser.tokenizeSingleValue(value);
-        if (extTk.txt !== "") {
-            refDiags.push({ relRng: extTk.getRange(),
-                info: "Unexpected keyword or identifier.",  lv: DiagnosticSeverity.Error });
-        }
-        const legalType = ["cycle", "hold", "toggle"];
-        if (!legalType.includes(valTk.txt)) {
-            refDiags.push({ relRng: valTk.getRange(), lv: DiagnosticSeverity.Error,
-                info: `Unknow type '${valTk.txt}', The allowed types are ${legalType.join(", ")}.` });
-            return false;
-        }
+        DiagnosticsManager.runDiagnostics("global.unexpectedWord", [], () => {
+            if (extTk.txt !== "") {
+                refDiags.push({ relRng: extTk.getRange(),
+                    info: "Unexpected keyword or identifier.", lv: DiagnosticSeverity.Error });
+            }
+            return true;
+        })
+        DiagnosticsManager.runDiagnostics("section.key.unknowType", [], () => {
+            const legalType = ["cycle", "hold", "toggle"];
+            if (!legalType.includes(valTk.txt)) {
+                refDiags.push({ relRng: valTk.getRange(), lv: DiagnosticSeverity.Error,
+                    info: `Unknow type '${valTk.txt}', The allowed types are ${legalType.join(", ")}.` });
+            }
+            return true;
+        })
     
     // } else if (GIMIVariable.isVariableStr(key.txt)) {
 
@@ -565,9 +571,9 @@ function regHandleStrategyKeySec(key: TextToken, value: TextToken, lineHasSemico
     return true;
 }
 
-type CommandListSectionHandleStrategyT = (line: TextToken, first: TextToken, content: TextToken, refDiags: RelativeDiagnostic[]) => boolean;
+type CommandListSectionHandleStrategyT = (line: TextToken, first: TextToken, content: TextToken, refDiags: TempDiagnostic[]) => boolean;
 
-function cmdListHandleStrategyPresentSec(line: TextToken, first: TextToken, content: TextToken, refDiags: RelativeDiagnostic[]): boolean {
+function cmdListHandleStrategyPresentSec(line: TextToken, first: TextToken, content: TextToken, refDiags: TempDiagnostic[]): boolean {
     if (first.txt.startsWith("$")) {
         // is a variable
         const {key, equal, value, complete: completeL} = handleBasicKeyValuePair({content: line}, refDiags);
@@ -605,7 +611,7 @@ function cmdListHandleStrategyPresentSec(line: TextToken, first: TextToken, cont
 
 type SectionLinesAnalyzeResult = {
     /**diagnostics */
-    diags: RelativeDiagnostic[],
+    diags: TempDiagnostic[],
     /**folding ranges, only for commandlist section */
     flodRngs?: Range[]
 }
@@ -659,10 +665,10 @@ function analyzeCommandListSection(document: TextDocument, range: Range, startPo
     const foldRngStStack: number[] = [];
     const foldRngs = _r.flodRngs!;
     
-    const getMissConditionDiag = ((rng: Range): RelativeDiagnostic => {
+    const getMissConditionDiag = ((rng: Range): TempDiagnostic => {
         return { info: "Condition expression can't be empty.", lv: DiagnosticSeverity.Error, relRng: rng }
     })
-    const getNotMoreExtra = ((rng: Range): RelativeDiagnostic => {
+    const getNotMoreExtra = ((rng: Range): TempDiagnostic => {
         return { info: "After endif and else not need anymore keyword or identifier.", lv: DiagnosticSeverity.Error, relRng: rng }
     })
     const procFoldRng = ((mode: "push" | "complete", lineIdx: number): boolean => {

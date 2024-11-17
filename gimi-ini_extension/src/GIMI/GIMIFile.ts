@@ -10,7 +10,7 @@ import { GIMINamespace } from "./GIMINamespace";
 import { GIMIChainStructure, ChainIdentifier } from "./GIMIChainStructure"
 import { isCommentText } from "./parser"
 import { AllSections, getSectionConfig, isPrefixSection, SectionType } from "./GIMISectionTitle";
-import { GIMIConfiguration } from "../util";
+import { ConfigurationsManager } from "../configurations";
 
 // type ChainContentTypes = GIMINamespace | GIMISection
 type ChainContentTypes = GIMISection
@@ -125,7 +125,7 @@ export class GIMIFile {
      * update section duplicate diagnostics (file level) 
      */
     private updateDiagnostics(): void {
-        if (!GIMIConfiguration.diagnostics.enable) {
+        if (!ConfigurationsManager.settings.diagnostics.enable) {
             return;
         }
         this._diagnostics.length = 0;
@@ -161,7 +161,6 @@ export class GIMIFile {
     }
 
     getFoldingRanges(): Range[] {
-        // return this.structureChain.map(_c => _c.range);
         let _r: Range[] = [];
         this.structureChain.forEach(_c => {
             _r.push(_c.range);

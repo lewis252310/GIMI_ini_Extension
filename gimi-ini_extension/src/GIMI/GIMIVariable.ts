@@ -1,7 +1,8 @@
 import { DiagnosticSeverity, Range } from "vscode";
 import { GIMISection } from "./GIMISection";
 import { GIMIString } from "./GIMIString";
-import { RelativeDiagnostic, TextToken } from "./parser";
+import { TextToken } from "./parser";
+import { TempDiagnostic } from "../diagnostics"
 
 type VariableType = 'persist'| 'global' | 'local'
 
@@ -12,7 +13,7 @@ type VariableAnalyzeResult = {
         range: Range,
         type: VariableType
     },
-    diags: RelativeDiagnostic[]
+    diags: TempDiagnostic[]
 }
 
 /**

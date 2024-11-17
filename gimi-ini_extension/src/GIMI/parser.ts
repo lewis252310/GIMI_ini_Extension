@@ -1,11 +1,5 @@
 import { Range, Position, TextDocument, DiagnosticSeverity, TextLine } from "vscode";
-import { GIMIConfiguration } from "../util";
-
-export type RelativeDiagnostic = {
-    relRng: Range,
-    info: string,
-    lv: DiagnosticSeverity
-}
+import { TempDiagnostic, DiagnosticsManager } from "../diagnostics";
 
 export class TextToken {
     readonly txt: string;
@@ -258,7 +252,7 @@ export class GIMIDocumentParser {
     /**
      * for parse expression in parentheses, should not input parenthese token
      */
-    static parseExpression(tokens: ParserToken[], refDiags: RelativeDiagnostic[]): TextTokenComposite {
+    static parseExpression(tokens: ParserToken[], refDiags: TempDiagnostic[]): TextTokenComposite {
         // maybe change state types to number enum?
         type StateT = "vals" | "sign|vals" | "nega|sign|vals" | "logi|arith|sign|comp" | "logi|arith|sign";
         const isVarType = ((tkt: ParserTokenType): boolean => tkt === "val" || tkt === "var" || tkt === "keyW" || tkt === "expr");
@@ -374,47 +368,45 @@ export class GIMIDocumentParser {
         return new TextTokenComposite(tokens);
     }
 
-    static diagnosticCondition(textToken: TextToken): RelativeDiagnostic[] {
-        const diags: RelativeDiagnostic[] = [];
+    static diagnosticCondition(textToken: TextToken): TempDiagnostic[] {
+        const diags: TempDiagnostic[] = [];
         const stack: ParserToken[][] = [];
         let currentTokens: ParserToken[] = [];
-        if (!GIMIConfiguration.diagnostics.enable) {
-            return [];
-        }
-        const tokens = textToken.regexSplit(txt => {
-            const matchs = [...txt.matchAll(this.conditionStructureRegex)];
-            return matchs.map(_m => {
-                return {regexArr: _m, indexes: [0]};
-            })
-        });
-        const tttt = 20 + -   1
-        if (!tokens) {
-            return diags;
-        }
-        tokens.forEach(tk => {
-            if (tk.txt === '(') {
-                // 將當前列表推入堆棧，並開啟新的列表
-                stack.push(currentTokens);
-                currentTokens = [tk];
-            } else if (tk.txt === ')') {
-                // 處理當前列表，並與堆棧中的上層合併
-                currentTokens.push(tk);
-                if (stack.length > 0) {
-                    const result = this.parseExpression(currentTokens, diags); // 處理括號內的表達式
-                    currentTokens = stack.pop()!; // 回到外層
-                    currentTokens.push(result);
-                }
-            } else {
-                currentTokens.push(tk);
+        DiagnosticsManager.runDiagnostics("condition", diags, () => {
+            const tokens = textToken.regexSplit(txt => {
+                const matchs = [...txt.matchAll(this.conditionStructureRegex)];
+                return matchs.map(_m => {
+                    return {regexArr: _m, indexes: [0]};
+                })
+            });
+            if (!tokens) {
+                return undefined;
             }
-        });
-        // 如果有堆棧殘留 壓回到 current
-        while (stack.length > 0) {
-            // 倒序、當前接在 pop 的末尾
-            const unclosedTokens = stack.pop()!;
-            currentTokens = unclosedTokens.concat(currentTokens);
-        }
-        this.parseExpression(currentTokens, diags);
+            tokens.forEach(tk => {
+                if (tk.txt === '(') {
+                    // 將當前列表推入堆棧，並開啟新的列表
+                    stack.push(currentTokens);
+                    currentTokens = [tk];
+                } else if (tk.txt === ')') {
+                    // 處理當前列表，並與堆棧中的上層合併
+                    currentTokens.push(tk);
+                    if (stack.length > 0) {
+                        const result = this.parseExpression(currentTokens, diags); // 處理括號內的表達式
+                        currentTokens = stack.pop()!; // 回到外層
+                        currentTokens.push(result);
+                    }
+                } else {
+                    currentTokens.push(tk);
+                }
+            });
+            // 如果有堆棧殘留 壓回到 current
+            while (stack.length > 0) {
+                // 倒序、當前接在 pop 的末尾
+                const unclosedTokens = stack.pop()!;
+                currentTokens = unclosedTokens.concat(currentTokens);
+            }
+            this.parseExpression(currentTokens, diags);
+        })
         return diags;
     }
 }

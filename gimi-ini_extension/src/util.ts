@@ -1,18 +1,6 @@
 import path from 'path';
 import { performance } from 'perf_hooks'
 import { Diagnostic, DiagnosticSeverity, Position, Range, TextDocument, TextEditor, TextLine, Uri, window, workspace } from 'vscode'
-import { GIMIDiagnosticsManager } from './diagnostics'
-
-export class GIMIConfiguration {
-    static parseingAllowedMaximumLines: number;
-    static parseingAllowedMaximumCharacters: number;
-    static parseingDebounceInterval: number;
-    static diagnostics: {
-        level: number;
-        enable: boolean;
-        // conditionExp: boolean;
-    } = {level: 2, enable: true}
-}
 
 interface GIMIIdentifierInfo {
     namespace: string;

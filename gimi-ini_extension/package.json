@@ -53,12 +53,12 @@
       {
         "title": "GIMI ini",
         "properties": {
-          "GIMIini.diagnostics.enableDiagnostic": {
+          "GIMIini.diagnostics.enable": {
             "type": "boolean",
             "default": true,
             "description": "Enable diagnostics or not. (Need restart VSCode)"
           },
-          "GIMIini.diagnostics.diagnosticLevel": {
+          "GIMIini.diagnostics.level": {
             "type": "string",
             "enum": ["Close", "Lite", "Detail"],
             "enumDescriptions": [

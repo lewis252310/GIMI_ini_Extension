@@ -998,7 +998,7 @@
                     }
                 },
                 {
-                    "match": "(?i)^\\s*((?:[vhdgpc]s-(?:t|cb)|vb)\\d{1,3}|ib) *= *(.*)?",
+                    "match": "(?i)^\\s*((?:[vhdgpc]s-(?:t|u|cb)|vb)\\d{1,3}|ib) *= *(.*)?",
                     "captures": {
                         "1": {
                             "name": "variable.language.gimi-ini"

@@ -3,12 +3,12 @@ import { languages, TextDocument, Uri, workspace } from "vscode";
 import { GIMIIdentifier, GIMIRule } from "./GIMI";
 import { GIMIFile } from "./GIMIFile";
 import { GIMIProject } from "./GIMIProject";
-import { GIMIConfiguration } from "../util";
+import { DiagnosticsManager } from "../diagnostics"
+import { ConfigurationsManager } from "../configurations";
 
 export class GIMIWorkspace {
 
     private static projects: GIMIProject[] = [];
-    static readonly diagnosticCollection = languages.createDiagnosticCollection('gimi-ini');
 
     static print(msg: string): void {
         console.log(` >_ Workspace: ${msg}`)
@@ -114,18 +114,18 @@ export class GIMIWorkspace {
     }
 
     static updateDiagnosticCollection(file: GIMIFile): boolean {
-        if (!GIMIConfiguration.diagnostics.enable) {
+        if (!ConfigurationsManager.settings.diagnostics.enable) {
             return false;
         }
-        this.diagnosticCollection.set(file.uri, file.getAllDiagnostics());
+        DiagnosticsManager.diagnosticCollection.set(file.uri, file.getAllDiagnostics());
         return true;
     }
 
     static deleteDiagnostic(file: GIMIFile): boolean {
-        if (!GIMIConfiguration.diagnostics.enable) {
+        if (!ConfigurationsManager.settings.diagnostics.enable) {
             return false;
         }
-        this.diagnosticCollection.delete(file.uri);
+        DiagnosticsManager.diagnosticCollection.delete(file.uri);
         return true;
     }
 }
